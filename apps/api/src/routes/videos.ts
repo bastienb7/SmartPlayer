@@ -6,6 +6,7 @@ import { eq, and, desc } from "drizzle-orm";
 import { authMiddleware, getOrgId } from "../middleware/auth";
 import { getUploadUrl } from "../lib/s3";
 import { cacheDel } from "../lib/redis";
+import { enqueueTranscode } from "../lib/queue";
 
 const app = new Hono();
 app.use("*", authMiddleware);
@@ -77,10 +78,14 @@ app.post("/:id/uploaded", async (c) => {
 
   if (!video) return c.json({ error: "Not found" }, 404);
 
-  // TODO: Enqueue BullMQ transcode job
-  // await transcodeQueue.add("transcode", { videoId: id, orgId });
+  // Enqueue transcode job
+  const jobId = await enqueueTranscode({
+    videoId: id,
+    orgId,
+    sourceKey: video.sourceKey!,
+  });
 
-  return c.json(video);
+  return c.json({ ...video, jobId });
 });
 
 // Update video
