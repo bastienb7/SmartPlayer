@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartPlayer - Test Page</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    h1 { margin-bottom: 8px; font-size: 24px; }
+    p { margin-bottom: 32px; color: #888; font-size: 14px; }
+    .player-container { width: 100%; max-width: 800px; }
+    .headline { font-size: 28px; font-weight: 700; text-align: center; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <h1>SmartPlayer Test</h1>
+  <p>All 13 features active — using Big Buck Bunny HLS stream</p>
+
+  <h2 class="headline" id="headline-target">Watch This Amazing Video Now!</h2>
+
+  <div class="player-container">
+    <div id="smartplayer-test001" data-config='{
+      "videoId": "test001",
+      "hlsUrl": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "posterUrl": "",
+      "autoplay": {
+        "enabled": true,
+        "mutedMessage": "Your video has already started",
+        "clickMessage": "Click to listen",
+        "overlayOpacity": 0.85
+      },
+      "progressBar": {
+        "enabled": true,
+        "fictitious": true,
+        "fastPhaseEnd": 0.2,
+        "slowPhaseEnd": 0.8,
+        "fastPhaseDisplay": 0.5,
+        "slowPhaseDisplay": 0.85
+      },
+      "cta": {
+        "enabled": true,
+        "triggers": [
+          {
+            "id": "cta-1",
+            "timestamp": 10,
+            "duration": 8,
+            "text": "Get Started Now - 50% Off!",
+            "url": "#cta-clicked",
+            "openInNewTab": false
+          },
+          {
+            "id": "cta-2",
+            "timestamp": 30,
+            "duration": 10,
+            "text": "Limited Time Offer!",
+            "url": "#cta2-clicked",
+            "buttonColor": "#ef4444",
+            "openInNewTab": false
+          }
+        ]
+      },
+      "recoveryThumbnail": {
+        "enabled": true,
+        "imageUrl": "https://placehold.co/600x400/6366f1/white?text=Continue+Watching",
+        "delayMs": 2000,
+        "message": "Click to continue watching"
+      },
+      "resumePlay": {
+        "enabled": true,
+        "maxAgeDays": 7,
+        "promptMessage": "Continue where you left off?"
+      },
+      "headline": {
+        "enabled": true,
+        "variants": [
+          { "id": "a", "text": "Watch This Amazing Video Now!" },
+          { "id": "b", "text": "You Wont Believe What Happens Next!" }
+        ],
+        "targetSelector": "#headline-target"
+      },
+      "miniHook": {
+        "enabled": true,
+        "hooks": [
+          { "type": "milestone", "triggerAtPercent": 25, "text": "25% done — the best part is coming!", "durationMs": 4000 },
+          { "type": "milestone", "triggerAtPercent": 50, "text": "Halfway there! Keep watching...", "durationMs": 4000 },
+          { "type": "countdown", "triggerAtPercent": 75, "text": "Almost done — don not leave now!", "durationMs": 5000 }
+        ]
+      },
+      "turboSpeed": {
+        "enabled": false,
+        "minSpeed": 0.95,
+        "maxSpeed": 1.15
+      },
+      "abTest": {
+        "enabled": false
+      },
+      "analytics": {
+        "enabled": true,
+        "endpoint": "/analytics/events",
+        "beaconEndpoint": "/analytics/beacon",
+        "batchSize": 10,
+        "flushIntervalMs": 5000,
+        "heartbeatIntervalMs": 5000
+      },
+      "pixels": {
+        "enabled": false,
+        "customEvents": []
+      },
+      "style": {
+        "primaryColor": "#6366f1",
+        "backgroundColor": "#000000",
+        "controlsBackground": "rgba(0,0,0,0.75)",
+        "controlsColor": "#ffffff",
+        "fontFamily": "-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
+        "borderRadius": 8,
+        "showControls": true,
+        "controlsAutoHide": true,
+        "controlsAutoHideMs": 3000
+      },
+      "assignedHeadlineVariant": "a"
+    }'></div>
+  </div>
+
+  <script src="./dist/smartplayer.min.js"></script>
+</body>
+</html>
