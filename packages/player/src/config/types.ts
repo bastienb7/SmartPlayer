@@ -68,13 +68,51 @@ export interface ResumePlayConfig {
 
 export interface HeadlineVariant {
   id: string;
-  text: string;
+  type: "text" | "image" | "gif";
+  /** Text content (for type "text") */
+  text?: string;
+  /** Image/GIF URL for desktop (for type "image" | "gif") */
+  imageUrl?: string;
+  /** Separate image/GIF URL for mobile (optional) */
+  mobileImageUrl?: string;
+  /** Alt text for accessibility */
+  altText?: string;
+  /** Text styling (for type "text") */
+  style?: {
+    fontSize?: string;
+    fontWeight?: string;
+    color?: string;
+    backgroundColor?: string;
+    textAlign?: string;
+    padding?: string;
+    maxWidth?: string;
+  };
+  /** Tracking — populated by server for analytics */
+  weight?: number;
 }
 
 export interface HeadlineConfig {
   enabled: boolean;
   variants: HeadlineVariant[];
+  /** CSS selector of the container to inject headline into. If not set, headline is placed above the player. */
   targetSelector?: string;
+  /** Enable A/B testing across variants */
+  abTestEnabled: boolean;
+  /** ID of the A/B test (for analytics attribution) */
+  abTestId?: string;
+  /** "no headline" control variant — tests whether any headline helps */
+  includeNoHeadlineVariant: boolean;
+  /** Assigned variant ID (from server — sticky per viewer) */
+  assignedVariantId?: string;
+  /** Responsive breakpoint for mobile (px) */
+  mobileBreakpoint: number;
+  /** Where to place the headline relative to the player */
+  position: "above" | "below" | "overlay-top" | "overlay-bottom";
+  /** Animation on appearance */
+  animation: "none" | "fade" | "slide-down" | "slide-up";
+  /** Click action — optional link */
+  clickUrl?: string;
+  clickOpenNewTab?: boolean;
 }
 
 export interface MiniHookItem {
@@ -198,6 +236,11 @@ export function mergeConfig(partial: Partial<PlayerConfig>): PlayerConfig {
     headline: {
       enabled: false,
       variants: [],
+      abTestEnabled: false,
+      includeNoHeadlineVariant: false,
+      mobileBreakpoint: 768,
+      position: "above",
+      animation: "fade",
       ...partial.headline,
     },
     miniHook: { enabled: false, hooks: [], ...partial.miniHook },

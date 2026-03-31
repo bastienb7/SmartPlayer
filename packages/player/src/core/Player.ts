@@ -3,6 +3,7 @@ import { EventBus } from "./EventBus";
 import { StateManager } from "./StateManager";
 import { VideoEngine } from "./VideoEngine";
 import { SmartAutoplay } from "../features/SmartAutoplay";
+import { Headlines } from "../features/Headlines";
 import { FictitiousProgress } from "../features/FictitiousProgress";
 import { CTASync } from "../features/CTASync";
 import { RecoveryThumbnail } from "../features/RecoveryThumbnail";
@@ -42,18 +43,10 @@ export class Player {
     wrapper.appendChild(this.engine.video);
     this.container.appendChild(wrapper);
 
-    // Headline A/B — inject assigned variant into target element
-    if (this.config.headline.enabled && this.config.assignedHeadlineVariant) {
-      const target = this.config.headline.targetSelector
-        ? document.querySelector(this.config.headline.targetSelector)
-        : null;
-      if (target) {
-        const variant = this.config.headline.variants.find(
-          (v) => v.id === this.config.assignedHeadlineVariant
-        );
-        if (variant) target.textContent = variant.text;
-      }
-    }
+    // Headlines (text/image/GIF with A/B testing)
+    const headlines = new Headlines(this.bus, this.config.headline, this.container);
+    headlines.init();
+    this.features.push(headlines);
 
     // Initialize features
     const fictitiousProgress = new FictitiousProgress(

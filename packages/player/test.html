@@ -25,8 +25,6 @@
   <h1>SmartPlayer Test</h1>
   <p>All 13 features active — using Big Buck Bunny HLS stream</p>
 
-  <h2 class="headline" id="headline-target">Watch This Amazing Video Now!</h2>
-
   <div class="player-container">
     <div id="smartplayer-test001" data-config='{
       "videoId": "test001",
@@ -82,10 +80,16 @@
       "headline": {
         "enabled": true,
         "variants": [
-          { "id": "a", "text": "Watch This Amazing Video Now!" },
-          { "id": "b", "text": "You Wont Believe What Happens Next!" }
+          { "id": "a", "type": "text", "text": "Watch This Amazing Video Now!", "style": { "fontSize": "28px", "fontWeight": "700", "color": "#ffffff", "textAlign": "center", "padding": "16px 24px" } },
+          { "id": "b", "type": "text", "text": "This Video Will Change Everything", "style": { "fontSize": "28px", "fontWeight": "700", "color": "#6366f1", "textAlign": "center", "padding": "16px 24px" } }
         ],
-        "targetSelector": "#headline-target"
+        "abTestEnabled": true,
+        "abTestId": "test-headline-001",
+        "includeNoHeadlineVariant": false,
+        "assignedVariantId": "a",
+        "mobileBreakpoint": 768,
+        "position": "above",
+        "animation": "fade"
       },
       "miniHook": {
         "enabled": true,

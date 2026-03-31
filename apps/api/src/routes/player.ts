@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { db, players, videos, ctas, pixels } from "@smartplayer/db";
+import { db, players, videos, ctas, pixels, headlines, headlineVariants } from "@smartplayer/db";
 import { eq } from "drizzle-orm";
 import { cacheGet, cacheSet } from "../lib/redis";
 import { playerConfigRateLimit } from "../middleware/rateLimit";
@@ -92,7 +92,7 @@ app.get("/:videoId/config", playerConfigRateLimit, async (c) => {
     },
     recoveryThumbnail: player.recoveryThumbnailConfig,
     resumePlay: player.resumePlayConfig,
-    headline: { enabled: false, variants: [] },
+    headline: await buildHeadlineConfig(player.id),
     miniHook: player.miniHookConfig,
     turboSpeed: player.turboSpeedConfig,
     abTest: { enabled: false },
@@ -113,5 +113,92 @@ app.get("/:videoId/config", playerConfigRateLimit, async (c) => {
 
   return c.json(config);
 });
+
+/**
+ * Build headline config for the player, including A/B variant assignment.
+ */
+async function buildHeadlineConfig(playerId: string) {
+  const headline = await db.query.headlines.findFirst({
+    where: eq(headlines.playerId, playerId),
+  });
+
+  if (!headline) {
+    return {
+      enabled: false,
+      variants: [],
+      abTestEnabled: false,
+      includeNoHeadlineVariant: false,
+      mobileBreakpoint: 768,
+      position: "above" as const,
+      animation: "fade" as const,
+    };
+  }
+
+  const variants = await db.query.headlineVariants.findMany({
+    where: eq(headlineVariants.headlineId, headline.id),
+    orderBy: (hv, { asc }) => [asc(hv.sortOrder)],
+  });
+
+  // Filter out eliminated variants
+  const activeVariants = variants.filter((v) => !v.isEliminated);
+
+  // Assign variant (server-side for sticky assignment)
+  let assignedVariantId: string | undefined;
+  if (headline.winnerVariantId) {
+    // Test completed — always show winner
+    assignedVariantId = headline.winnerVariantId;
+  } else if (headline.abTestEnabled && activeVariants.length > 0) {
+    // Weighted random assignment
+    const totalWeight = activeVariants.reduce((sum, v) => sum + v.weight, 0)
+      + (headline.includeNoHeadlineVariant ? 100 : 0);
+    let roll = Math.random() * totalWeight;
+
+    if (headline.includeNoHeadlineVariant) {
+      roll -= 100;
+      if (roll <= 0) {
+        assignedVariantId = "__none__";
+      }
+    }
+
+    if (!assignedVariantId) {
+      for (const v of activeVariants) {
+        roll -= v.weight;
+        if (roll <= 0) {
+          assignedVariantId = v.id;
+          break;
+        }
+      }
+    }
+
+    assignedVariantId = assignedVariantId || activeVariants[0]?.id;
+  } else if (activeVariants.length > 0) {
+    // No A/B test — show first variant
+    assignedVariantId = activeVariants[0].id;
+  }
+
+  return {
+    enabled: activeVariants.length > 0 || headline.includeNoHeadlineVariant,
+    variants: activeVariants.map((v) => ({
+      id: v.id,
+      type: v.type,
+      text: v.text,
+      imageUrl: v.imageUrl,
+      mobileImageUrl: v.mobileImageUrl,
+      altText: v.altText,
+      style: v.style,
+      weight: v.weight,
+    })),
+    abTestEnabled: headline.abTestEnabled,
+    abTestId: headline.id,
+    includeNoHeadlineVariant: headline.includeNoHeadlineVariant,
+    assignedVariantId,
+    mobileBreakpoint: headline.mobileBreakpoint,
+    position: headline.position,
+    animation: headline.animation,
+    targetSelector: headline.targetSelector,
+    clickUrl: headline.clickUrl,
+    clickOpenNewTab: headline.clickOpenNewTab,
+  };
+}
 
 export { app as playerRoutes };

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/dashboard/stat-card";
 import {
-  Play, Eye, MousePointer, Clock, Code, Settings, BarChart3, Copy, Check,
+  Play, Eye, MousePointer, Clock, Code, Settings, BarChart3, Copy, Check, Type,
 } from "lucide-react";
 import { useState } from "react";
 import { formatDuration, formatNumber } from "@/lib/utils";
@@ -58,6 +58,11 @@ export default function VideoDetailPage({ params }: { params: Promise<{ id: stri
           </p>
         </div>
         <div className="flex gap-3">
+          <Link href={`/dashboard/videos/${id}/headlines`}>
+            <Button variant="outline">
+              <Type className="w-4 h-4 mr-2" /> Headlines
+            </Button>
+          </Link>
           <Link href={`/dashboard/videos/${id}/analytics`}>
             <Button variant="outline">
               <BarChart3 className="w-4 h-4 mr-2" /> Analytics

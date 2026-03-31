@@ -74,13 +74,36 @@ export interface ResumePlayConfig {
 
 export interface HeadlineVariant {
   id: string;
-  text: string;
+  type: "text" | "image" | "gif";
+  text?: string;
+  imageUrl?: string;
+  mobileImageUrl?: string;
+  altText?: string;
+  style?: {
+    fontSize?: string;
+    fontWeight?: string;
+    color?: string;
+    backgroundColor?: string;
+    textAlign?: string;
+    padding?: string;
+    maxWidth?: string;
+  };
+  weight?: number;
 }
 
 export interface HeadlineConfig {
   enabled: boolean;
   variants: HeadlineVariant[];
   targetSelector?: string;
+  abTestEnabled: boolean;
+  abTestId?: string;
+  includeNoHeadlineVariant: boolean;
+  assignedVariantId?: string;
+  mobileBreakpoint: number;
+  position: "above" | "below" | "overlay-top" | "overlay-bottom";
+  animation: "none" | "fade" | "slide-down" | "slide-up";
+  clickUrl?: string;
+  clickOpenNewTab?: boolean;
 }
 
 export interface MiniHookConfig {

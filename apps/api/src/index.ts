@@ -6,6 +6,7 @@ import { playerRoutes } from "./routes/player";
 import { videoRoutes } from "./routes/videos";
 import { analyticsRoutes } from "./routes/analytics";
 import { ctaRoutes } from "./routes/cta";
+import { headlineRoutes } from "./routes/headlines";
 import { embedRoutes } from "./routes/embed";
 import { env } from "./config/env";
 
@@ -31,6 +32,7 @@ app.route("/embed", embedRoutes);
 // Authenticated routes
 app.route("/api/videos", videoRoutes);
 app.route("/api/cta", ctaRoutes);
+app.route("/api/headlines", headlineRoutes);
 
 // 404 handler
 app.notFound((c) => c.json({ error: "Not found" }, 404));
