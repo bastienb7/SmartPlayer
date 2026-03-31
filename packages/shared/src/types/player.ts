@@ -23,11 +23,44 @@ export interface PlayerConfig {
   assignedSpeedVariant?: number;
 }
 
+export interface AutoplayVariant {
+  id: string;
+  overlayType: "default" | "image" | "minimal";
+  mutedMessage?: string;
+  clickMessage?: string;
+  overlayImageUrl?: string;
+  overlayImagePosition?: string;
+  overlayOpacity?: number;
+  weight?: number;
+}
+
 export interface AutoplayConfig {
   enabled: boolean;
+  overlayType: "default" | "image" | "minimal";
   mutedMessage: string;
   clickMessage: string;
+  messageColor: string;
+  messageSize: string;
+  overlayImageUrl?: string;
+  overlayImagePosition: "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right" | "custom";
+  overlayImageWidth?: string;
+  overlayOffsetX?: string;
+  overlayOffsetY?: string;
   overlayOpacity: number;
+  overlayColor: string;
+  overlayGradient: boolean;
+  mutedSegmentStart: number;
+  mutedSegmentEnd?: number;
+  trigger: "click" | "any-click" | "scroll" | "tap";
+  abTestEnabled: boolean;
+  abTestId?: string;
+  variants?: AutoplayVariant[];
+  assignedVariantId?: string;
+  restartOnUnmute: boolean;
+  showPlayButtonOnBlock: boolean;
+  playButtonColor?: string;
+  playButtonSize?: number;
+  overlayAnimation: "none" | "fade" | "pulse" | "bounce";
 }
 
 export interface ProgressBarConfig {

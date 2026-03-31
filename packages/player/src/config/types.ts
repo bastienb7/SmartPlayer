@@ -21,11 +21,62 @@ export interface PlayerConfig {
   assignedSpeedVariant?: number;
 }
 
+export interface AutoplayVariant {
+  id: string;
+  overlayType: "default" | "image" | "minimal";
+  mutedMessage?: string;
+  clickMessage?: string;
+  overlayImageUrl?: string;
+  overlayImagePosition?: string;
+  overlayOpacity?: number;
+  weight?: number;
+}
+
 export interface AutoplayConfig {
   enabled: boolean;
+
+  /** Overlay type: "default" = icon+text, "image" = custom image/GIF, "minimal" = small pill */
+  overlayType: "default" | "image" | "minimal";
+
+  // Text overlay
   mutedMessage: string;
   clickMessage: string;
+  messageColor: string;
+  messageSize: string;
+
+  // Custom image/GIF overlay
+  overlayImageUrl?: string;
+  overlayImagePosition: "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right" | "custom";
+  overlayImageWidth?: string;
+  overlayOffsetX?: string;
+  overlayOffsetY?: string;
+
+  // Background
   overlayOpacity: number;
+  overlayColor: string;
+  overlayGradient: boolean;
+
+  // Muted segment — which part of the video plays while muted
+  mutedSegmentStart: number;
+  mutedSegmentEnd?: number;
+
+  // Trigger
+  trigger: "click" | "any-click" | "scroll" | "tap";
+
+  // A/B testing
+  abTestEnabled: boolean;
+  abTestId?: string;
+  variants?: AutoplayVariant[];
+  assignedVariantId?: string;
+
+  // Behavior
+  restartOnUnmute: boolean;
+  showPlayButtonOnBlock: boolean;
+  playButtonColor?: string;
+  playButtonSize?: number;
+
+  // Animation
+  overlayAnimation: "none" | "fade" | "pulse" | "bounce";
 }
 
 export interface ProgressBarConfig {
@@ -190,9 +241,21 @@ export const DEFAULT_STYLE: StyleConfig = {
 
 export const DEFAULT_AUTOPLAY: AutoplayConfig = {
   enabled: true,
+  overlayType: "default",
   mutedMessage: "Your video has already started",
   clickMessage: "Click to listen",
+  messageColor: "#ffffff",
+  messageSize: "18px",
+  overlayImagePosition: "center",
   overlayOpacity: 0.85,
+  overlayColor: "#000000",
+  overlayGradient: false,
+  mutedSegmentStart: 0,
+  trigger: "click",
+  abTestEnabled: false,
+  restartOnUnmute: true,
+  showPlayButtonOnBlock: true,
+  overlayAnimation: "fade",
 };
 
 export const DEFAULT_PROGRESS: ProgressBarConfig = {

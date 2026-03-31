@@ -141,6 +141,15 @@ export function injectStyles(containerId: string, style: StyleConfig): void {
       from { opacity: 0; transform: translateX(-50%) translateY(10px); }
       to { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
+    @keyframes sp-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    @keyframes sp-bounce {
+      0% { opacity: 0; transform: scale(0.9); }
+      50% { transform: scale(1.03); }
+      100% { opacity: 1; transform: scale(1); }
+    }
   `;
 
   const styleEl = document.createElement("style");
