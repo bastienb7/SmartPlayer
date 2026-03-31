@@ -6,12 +6,29 @@ declare global {
     fbq?: (...args: any[]) => void;
     gtag?: (...args: any[]) => void;
     ttq?: { track: (...args: any[]) => void };
+    pintrk?: (...args: any[]) => void;
+    _tfa?: { push: (...args: any[]) => void };
   }
 }
 
+/**
+ * Pixel Tracking™ — Fire ad platform events at video milestones.
+ *
+ * Features:
+ * - Auto-fire events every N% (default 5%) — 20 automatic events
+ * - Custom events at specific timestamps
+ * - Facebook, Google, TikTok, Pinterest, Taboola support
+ * - Configurable event prefix (e.g. "View5", "View10", ...)
+ * - Reset on seek (prevents duplicate fires)
+ *
+ * Advantages:
+ * - Configurable interval (not fixed at 5%)
+ * - Pinterest + Taboola support
+ * - Custom prefix naming
+ */
 export class PixelTracking {
   private firedEvents = new Set<string>();
-  private loadedPlatforms = new Set<string>();
+  private firedAutoPercents = new Set<number>();
 
   constructor(
     private bus: EventBus,
@@ -21,69 +38,95 @@ export class PixelTracking {
   init(): void {
     if (!this.config.enabled) return;
 
-    // Lazy-load platform SDKs
-    if (this.config.facebook?.pixelId) this.initFacebook(this.config.facebook.pixelId);
-    if (this.config.google?.measurementId) this.initGoogle(this.config.google.measurementId);
-    if (this.config.tiktok?.pixelId) this.initTikTok(this.config.tiktok.pixelId);
+    // Auto-fire at intervals
+    if (this.config.autoFireInterval > 0) {
+      this.bus.on("video:timeupdate", (currentTime: number, duration: number) => {
+        if (duration <= 0) return;
+        const percent = (currentTime / duration) * 100;
 
-    if (this.config.customEvents.length === 0) return;
+        // Fire at each interval threshold
+        const interval = this.config.autoFireInterval;
+        for (let threshold = interval; threshold <= 100; threshold += interval) {
+          if (percent >= threshold && !this.firedAutoPercents.has(threshold)) {
+            this.firedAutoPercents.add(threshold);
+            const eventName = `${this.config.autoFirePrefix}${threshold}`;
+            this.fireToAllPlatforms(eventName);
 
-    this.bus.on("video:timeupdate", (currentTime: number) => {
-      for (const event of this.config.customEvents) {
-        const key = `${event.platform}:${event.eventName}:${event.triggerTimestamp}`;
-        if (
-          !this.firedEvents.has(key) &&
-          currentTime >= event.triggerTimestamp &&
-          currentTime < event.triggerTimestamp + 1.5
-        ) {
-          this.fireEvent(event);
-          this.firedEvents.add(key);
+            this.bus.emit("analytics:event", "pixel_fire", {
+              type: "auto",
+              eventName,
+              percent: threshold,
+            });
+          }
         }
-      }
-    });
+      });
+    }
+
+    // Custom events at specific timestamps
+    if (this.config.customEvents.length > 0) {
+      this.bus.on("video:timeupdate", (currentTime: number) => {
+        for (const event of this.config.customEvents) {
+          const key = `${event.platform}:${event.eventName}:${event.triggerTimestamp}`;
+          if (
+            !this.firedEvents.has(key) &&
+            currentTime >= event.triggerTimestamp &&
+            currentTime < event.triggerTimestamp + 1.5
+          ) {
+            this.fireEvent(event);
+            this.firedEvents.add(key);
+          }
+        }
+      });
+    }
 
     // Reset on seek
     this.bus.on("video:seeked", () => {
       this.firedEvents.clear();
+      this.firedAutoPercents.clear();
     });
   }
 
+  /** Fire a single custom event to its designated platform */
   private fireEvent(event: PixelEvent): void {
     this.bus.emit("analytics:event", "pixel_fire", {
+      type: "custom",
       platform: event.platform,
       eventName: event.eventName,
     });
+    this.fireToPlatform(event.platform, event.eventName);
+  }
 
-    switch (event.platform) {
-      case "facebook":
-        window.fbq?.("track", event.eventName);
-        break;
-      case "google":
-        window.gtag?.("event", event.eventName);
-        break;
-      case "tiktok":
-        window.ttq?.track(event.eventName);
-        break;
+  /** Fire an event to ALL configured platforms (for auto-fire) */
+  private fireToAllPlatforms(eventName: string): void {
+    if (this.config.facebook) this.fireToPlatform("facebook", eventName);
+    if (this.config.google) this.fireToPlatform("google", eventName);
+    if (this.config.tiktok) this.fireToPlatform("tiktok", eventName);
+    if (this.config.pinterest) this.fireToPlatform("pinterest", eventName);
+    if (this.config.taboola) this.fireToPlatform("taboola", eventName);
+  }
+
+  private fireToPlatform(platform: string, eventName: string): void {
+    try {
+      switch (platform) {
+        case "facebook":
+          window.fbq?.("trackCustom", eventName);
+          break;
+        case "google":
+          window.gtag?.("event", eventName);
+          break;
+        case "tiktok":
+          window.ttq?.track(eventName);
+          break;
+        case "pinterest":
+          window.pintrk?.("track", eventName);
+          break;
+        case "taboola":
+          window._tfa?.push({ notify: "event", name: eventName });
+          break;
+      }
+    } catch {
+      // Pixel errors should never break the player
     }
-  }
-
-  private initFacebook(pixelId: string): void {
-    if (this.loadedPlatforms.has("facebook") || window.fbq) return;
-    this.loadedPlatforms.add("facebook");
-    // Facebook pixel should be loaded by the page — we just fire events
-    // If not loaded, silently skip
-  }
-
-  private initGoogle(measurementId: string): void {
-    if (this.loadedPlatforms.has("google") || window.gtag) return;
-    this.loadedPlatforms.add("google");
-    // Google tag should be loaded by the page
-  }
-
-  private initTikTok(pixelId: string): void {
-    if (this.loadedPlatforms.has("tiktok") || window.ttq) return;
-    this.loadedPlatforms.add("tiktok");
-    // TikTok pixel should be loaded by the page
   }
 
   destroy(): void {}

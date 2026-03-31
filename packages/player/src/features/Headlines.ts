@@ -14,7 +14,7 @@ import { createElement, removeElement } from "../utils/dom";
  * - Click-through URL
  * - Full analytics tracking (impressions, clicks per variant)
  *
- * Improvements over VTurb:
+ * Unique advantages:
  * - Overlay positions (on top of video, not just outside)
  * - Animation options
  * - Click-through tracking

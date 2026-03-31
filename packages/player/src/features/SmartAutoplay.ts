@@ -21,7 +21,7 @@ const PLAY_ICON = `<svg width="32" height="32" viewBox="0 0 24 24" fill="white">
  * - Play button fallback when autoplay is blocked
  * - Gradient backgrounds
  *
- * Improvements over VTurb:
+ * Unique advantages:
  * - Minimal pill mode (less intrusive)
  * - Scroll trigger (unmute when user scrolls)
  * - Overlay animations (pulse, bounce)

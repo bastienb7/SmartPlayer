@@ -66,14 +66,17 @@ export interface AutoplayConfig {
 export interface ProgressBarConfig {
   enabled: boolean;
   fictitious: boolean;
-  /** Percentage of real progress where "fast" phase ends (0-1) */
   fastPhaseEnd: number;
-  /** Percentage of real progress where "slow" phase ends (0-1) */
   slowPhaseEnd: number;
-  /** Display percentage at end of fast phase (0-1) */
   fastPhaseDisplay: number;
-  /** Display percentage at end of slow phase (0-1) */
   slowPhaseDisplay: number;
+  retentionCurve?: number[];
+  smartMode: boolean;
+  barColor?: string;
+  barHeight: number;
+  bufferedColor?: string;
+  thumbColor?: string;
+  showThumb: boolean;
 }
 
 export interface CTATrigger {
@@ -85,11 +88,20 @@ export interface CTATrigger {
   buttonColor?: string;
   buttonTextColor?: string;
   openInNewTab: boolean;
+  placement: "inside" | "below" | "custom";
+  customSelector?: string;
+  borderRadius?: number;
+  fontSize?: string;
+  padding?: string;
+  fullWidth?: boolean;
 }
 
 export interface CTAConfig {
   enabled: boolean;
   triggers: CTATrigger[];
+  scrollToAction: boolean;
+  scrollToCTAId?: string;
+  scrollBehavior: "smooth" | "instant";
 }
 
 export interface RecoveryThumbnailConfig {
@@ -153,8 +165,11 @@ export interface MiniHookItem {
 
 export interface TurboSpeedConfig {
   enabled: boolean;
+  mode: "manual" | "auto-test";
+  speed: number;
   minSpeed: number;
   maxSpeed: number;
+  syncTimedFeatures: boolean;
 }
 
 export interface ABTestConfig {
@@ -174,26 +189,18 @@ export interface AnalyticsConfig {
 
 export interface PixelConfig {
   enabled: boolean;
-  facebook?: FacebookPixelConfig;
-  google?: GooglePixelConfig;
-  tiktok?: TikTokPixelConfig;
+  facebook?: { pixelId: string };
+  google?: { measurementId: string };
+  tiktok?: { pixelId: string };
+  pinterest?: { tagId: string };
+  taboola?: { pixelId: string };
   customEvents: PixelEvent[];
-}
-
-export interface FacebookPixelConfig {
-  pixelId: string;
-}
-
-export interface GooglePixelConfig {
-  measurementId: string;
-}
-
-export interface TikTokPixelConfig {
-  pixelId: string;
+  autoFireInterval: number;
+  autoFirePrefix: string;
 }
 
 export interface PixelEvent {
-  platform: "facebook" | "google" | "tiktok";
+  platform: "facebook" | "google" | "tiktok" | "pinterest" | "taboola";
   eventName: string;
   triggerTimestamp: number;
 }
@@ -206,6 +213,15 @@ export interface StyleConfig {
   fontFamily: string;
   borderRadius: number;
   showControls: boolean;
+  showBigPlayButton: boolean;
+  showSmallPlayButton: boolean;
+  showRewind: boolean;
+  showFastForward: boolean;
+  showSpeedControl: boolean;
+  showProgressBar: boolean;
+  showVideoTimer: boolean;
+  showVolume: boolean;
+  showFullscreen: boolean;
   controlsAutoHide: boolean;
   controlsAutoHideMs: number;
 }

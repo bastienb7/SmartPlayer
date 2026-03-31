@@ -82,10 +82,21 @@ export interface AutoplayConfig {
 export interface ProgressBarConfig {
   enabled: boolean;
   fictitious: boolean;
+  /** Static curve params (used when retentionCurve is empty) */
   fastPhaseEnd: number;
   slowPhaseEnd: number;
   fastPhaseDisplay: number;
   slowPhaseDisplay: number;
+  /** Retention-adaptive mode: server provides actual retention data */
+  retentionCurve?: number[];
+  /** Smart mode: auto-adapt based on retention data from ClickHouse */
+  smartMode: boolean;
+  /** Visual customization */
+  barColor?: string;
+  barHeight: number;
+  bufferedColor?: string;
+  thumbColor?: string;
+  showThumb: boolean;
 }
 
 export interface CTATrigger {
@@ -97,11 +108,27 @@ export interface CTATrigger {
   buttonColor?: string;
   buttonTextColor?: string;
   openInNewTab: boolean;
+  /** Placement: below video, inside video overlay, or custom HTML selector */
+  placement: "inside" | "below" | "custom";
+  /** CSS selector for custom placement */
+  customSelector?: string;
+  /** Button style */
+  borderRadius?: number;
+  fontSize?: string;
+  padding?: string;
+  /** Full-width button */
+  fullWidth?: boolean;
 }
 
 export interface CTAConfig {
   enabled: boolean;
   triggers: CTATrigger[];
+  /** Scroll to Action: auto-scroll page to center CTA when it appears */
+  scrollToAction: boolean;
+  /** Which CTA triggers the scroll (first by default) */
+  scrollToCTAId?: string;
+  /** Scroll behavior */
+  scrollBehavior: "smooth" | "instant";
 }
 
 export interface RecoveryThumbnailConfig {
@@ -180,8 +207,15 @@ export interface MiniHookConfig {
 
 export interface TurboSpeedConfig {
   enabled: boolean;
+  /** Manual mode: fixed speed for all viewers */
+  mode: "manual" | "auto-test";
+  /** Manual speed (1.0 to 1.5) */
+  speed: number;
+  /** Auto-test range */
   minSpeed: number;
   maxSpeed: number;
+  /** Sync all timed features (CTA, pixels, hooks) with speed */
+  syncTimedFeatures: boolean;
 }
 
 export interface ABTestConfig {
@@ -210,7 +244,13 @@ export interface PixelConfig {
   facebook?: { pixelId: string };
   google?: { measurementId: string };
   tiktok?: { pixelId: string };
+  pinterest?: { tagId: string };
+  taboola?: { pixelId: string };
   customEvents: PixelEvent[];
+  /** Auto-fire events at every N% of video progress (0 = disabled) */
+  autoFireInterval: number;
+  /** Custom event name prefix for auto-fired events (e.g. "View" → "View5", "View10"...) */
+  autoFirePrefix: string;
 }
 
 export interface StyleConfig {
@@ -220,7 +260,19 @@ export interface StyleConfig {
   controlsColor: string;
   fontFamily: string;
   borderRadius: number;
+  /** Master toggle */
   showControls: boolean;
+  /** Granular control toggles for conversion-optimized playback */
+  showBigPlayButton: boolean;
+  showSmallPlayButton: boolean;
+  showRewind: boolean;
+  showFastForward: boolean;
+  showSpeedControl: boolean;
+  showProgressBar: boolean;
+  showVideoTimer: boolean;
+  showVolume: boolean;
+  showFullscreen: boolean;
+  /** Auto-hide */
   controlsAutoHide: boolean;
   controlsAutoHideMs: number;
 }
@@ -235,6 +287,15 @@ export const DEFAULT_STYLE: StyleConfig = {
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   borderRadius: 8,
   showControls: true,
+  showBigPlayButton: false,
+  showSmallPlayButton: true,
+  showRewind: false,
+  showFastForward: false,
+  showSpeedControl: false,
+  showProgressBar: true,
+  showVideoTimer: true,
+  showVolume: true,
+  showFullscreen: true,
   controlsAutoHide: true,
   controlsAutoHideMs: 3000,
 };
@@ -265,6 +326,9 @@ export const DEFAULT_PROGRESS: ProgressBarConfig = {
   slowPhaseEnd: 0.8,
   fastPhaseDisplay: 0.5,
   slowPhaseDisplay: 0.85,
+  smartMode: false,
+  barHeight: 6,
+  showThumb: true,
 };
 
 export const DEFAULT_ANALYTICS: AnalyticsConfig = {
@@ -283,7 +347,7 @@ export function mergeConfig(partial: Partial<PlayerConfig>): PlayerConfig {
     posterUrl: partial.posterUrl,
     autoplay: { ...DEFAULT_AUTOPLAY, ...partial.autoplay },
     progressBar: { ...DEFAULT_PROGRESS, ...partial.progressBar },
-    cta: { enabled: false, triggers: [], ...partial.cta },
+    cta: { enabled: false, triggers: [], scrollToAction: false, scrollBehavior: "smooth", ...partial.cta },
     recoveryThumbnail: {
       enabled: false,
       imageUrl: "",
@@ -309,8 +373,11 @@ export function mergeConfig(partial: Partial<PlayerConfig>): PlayerConfig {
     miniHook: { enabled: false, hooks: [], ...partial.miniHook },
     turboSpeed: {
       enabled: false,
+      mode: "manual",
+      speed: 1.0,
       minSpeed: 0.95,
-      maxSpeed: 1.15,
+      maxSpeed: 1.5,
+      syncTimedFeatures: true,
       ...partial.turboSpeed,
     },
     abTest: { enabled: false, ...partial.abTest },
@@ -318,6 +385,8 @@ export function mergeConfig(partial: Partial<PlayerConfig>): PlayerConfig {
     pixels: {
       enabled: false,
       customEvents: [],
+      autoFireInterval: 5,
+      autoFirePrefix: "View",
       ...partial.pixels,
     },
     style: { ...DEFAULT_STYLE, ...partial.style },
