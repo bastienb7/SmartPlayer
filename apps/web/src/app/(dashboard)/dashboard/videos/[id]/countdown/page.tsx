@@ -137,6 +137,42 @@ export default function CountdownPage({ params }: { params: Promise<{ id: string
         />
       </Card>
 
+      {/* Preview */}
+      {config.enabled && (
+        <Card className="mb-6">
+          <CardTitle className="mb-4">Preview</CardTitle>
+          <CardContent>
+            <p className="text-xs text-muted-foreground mb-2">Preview</p>
+            <div className="relative bg-black rounded-lg aspect-video overflow-hidden">
+              {/* Fake progress bar */}
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                <div className="h-full w-[60%] bg-primary" />
+              </div>
+              {/* Play icon hint */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+                  <div className="w-0 h-0 border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent border-l-[14px] border-l-white/60 ml-1" />
+                </div>
+              </div>
+              {/* Countdown overlay badge */}
+              <div className="absolute top-4 right-4">
+                <div className="bg-black/70 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 flex items-center gap-2">
+                  <span className="text-white/80 text-xs font-medium">
+                    {config.text || "Offer expires in"}
+                  </span>
+                  <span className="text-white text-sm font-bold font-mono">
+                    {Math.floor(config.duration / 60)
+                      .toString()
+                      .padStart(2, "0")}
+                    :{(config.duration % 60).toString().padStart(2, "0")}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {config.enabled && (
         <>
           {/* Countdown Type */}

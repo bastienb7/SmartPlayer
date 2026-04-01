@@ -104,6 +104,72 @@ export default function PageSyncPage({ params }: { params: Promise<{ id: string 
         </div>
       )}
 
+      {/* Preview */}
+      <Card className="mb-6">
+        <CardTitle className="mb-4">Preview</CardTitle>
+        <CardContent>
+          <p className="text-xs text-muted-foreground mb-2">Preview</p>
+          <div className="grid grid-cols-2 gap-3">
+            {/* Left: video player */}
+            <div className="relative bg-black rounded-lg aspect-video overflow-hidden">
+              {/* Fake progress bar */}
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                <div className="h-full w-[50%] bg-primary" />
+              </div>
+              {/* Play icon hint */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                  <div className="w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-[10px] border-l-white/60 ml-0.5" />
+                </div>
+              </div>
+              <span className="absolute top-2 left-2 text-[9px] text-white/40 font-medium">VIDEO</span>
+            </div>
+            {/* Right: webpage mock */}
+            <div className="relative bg-muted rounded-lg aspect-video overflow-hidden p-3 flex flex-col gap-2">
+              <span className="text-[9px] text-muted-foreground font-medium">WEBPAGE</span>
+              {/* Placeholder webpage elements */}
+              <div className="h-2 w-3/4 bg-foreground/10 rounded" />
+              <div className="h-2 w-full bg-foreground/10 rounded" />
+              <div className="h-2 w-5/6 bg-foreground/10 rounded" />
+              {/* Highlight synced rules */}
+              {rules.length > 0 ? (
+                <div className="mt-auto space-y-1.5">
+                  {rules.slice(0, 4).map((rule, i) => (
+                    <div
+                      key={i}
+                      className={`flex items-center gap-1.5 px-2 py-1 rounded text-[9px] font-mono ${
+                        rule.action === "show"
+                          ? "bg-green-500/15 text-green-600 border border-green-500/30"
+                          : rule.action === "hide"
+                          ? "bg-red-500/15 text-red-600 border border-red-500/30 opacity-50"
+                          : rule.action === "scroll-to"
+                          ? "bg-blue-500/15 text-blue-600 border border-blue-500/30"
+                          : "bg-yellow-500/15 text-yellow-600 border border-yellow-500/30"
+                      }`}
+                    >
+                      <span className="truncate">{rule.selector || ".element"}</span>
+                      <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5 shrink-0">
+                        {rule.action}
+                      </Badge>
+                      <span className="text-[8px] shrink-0 opacity-60">@{rule.triggerAtPercent}%</span>
+                    </div>
+                  ))}
+                  {rules.length > 4 && (
+                    <p className="text-[9px] text-muted-foreground">+{rules.length - 4} more</p>
+                  )}
+                </div>
+              ) : (
+                <div className="mt-auto">
+                  <div className="px-2 py-1 rounded text-[9px] text-muted-foreground border border-dashed border-muted-foreground/30">
+                    Add rules to see sync preview
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Add rule button */}
       <div className="flex gap-2 mb-6">
         <Button variant="outline" size="sm" onClick={addRule}>

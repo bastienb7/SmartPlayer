@@ -125,6 +125,42 @@ export default function ResumePlayPage({ params }: { params: Promise<{ id: strin
         />
       </Card>
 
+      {/* Preview */}
+      {config.enabled && (
+        <Card className="mb-6">
+          <CardTitle className="mb-4">Preview</CardTitle>
+          <CardContent>
+            <p className="text-xs text-muted-foreground mb-2">Preview</p>
+            <div className="relative bg-black rounded-lg aspect-video overflow-hidden">
+              {/* Fake progress bar */}
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                <div className="h-full w-[42%] bg-primary" />
+              </div>
+              {/* Play icon hint */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+                  <div className="w-0 h-0 border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent border-l-[14px] border-l-white/60 ml-1" />
+                </div>
+              </div>
+              {/* Resume overlay */}
+              <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-3">
+                <p className="text-white text-sm font-medium text-center px-4">
+                  {config.promptMessage || "Continue where you left off?"}
+                </p>
+                <div className="flex gap-2">
+                  <span className="px-4 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium">
+                    Resume
+                  </span>
+                  <span className="px-4 py-1.5 rounded-md bg-white/10 text-white text-xs font-medium border border-white/20">
+                    Start Over
+                  </span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {config.enabled && (
         <Card>
           <CardTitle className="mb-4">Settings</CardTitle>

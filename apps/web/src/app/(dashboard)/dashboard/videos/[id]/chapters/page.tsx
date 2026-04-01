@@ -102,6 +102,62 @@ export default function ChaptersPage({ params }: { params: Promise<{ id: string 
         </div>
       )}
 
+      {/* Preview */}
+      {chapters.length > 0 && (
+        <Card className="mb-6">
+          <CardTitle className="mb-4">Preview</CardTitle>
+          <CardContent>
+            <p className="text-xs text-muted-foreground mb-2">Preview</p>
+            <div className="relative bg-black rounded-lg aspect-video overflow-hidden">
+              {/* Play icon hint */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+                  <div className="w-0 h-0 border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent border-l-[14px] border-l-white/60 ml-1" />
+                </div>
+              </div>
+              {/* Chapter markers on progress bar */}
+              <div className="absolute bottom-6 left-4 right-4">
+                {/* Chapter labels */}
+                <div className="relative h-5 mb-1">
+                  {(() => {
+                    const maxTs = Math.max(...chapters.map((c) => c.timestamp), 1);
+                    return chapters.map((chapter, i) => {
+                      const pct = Math.min((chapter.timestamp / maxTs) * 100, 100);
+                      return (
+                        <span
+                          key={i}
+                          className="absolute text-[9px] text-white/70 whitespace-nowrap -translate-x-1/2"
+                          style={{ left: `${pct}%` }}
+                        >
+                          {chapter.title || `Ch ${i + 1}`}
+                        </span>
+                      );
+                    });
+                  })()}
+                </div>
+                {/* Progress bar with markers */}
+                <div className="relative h-1.5 bg-white/20 rounded-full">
+                  <div className="h-full w-[25%] bg-primary rounded-full" />
+                  {(() => {
+                    const maxTs = Math.max(...chapters.map((c) => c.timestamp), 1);
+                    return chapters.map((chapter, i) => {
+                      const pct = Math.min((chapter.timestamp / maxTs) * 100, 100);
+                      return (
+                        <div
+                          key={i}
+                          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-white border-2 border-primary"
+                          style={{ left: `${pct}%` }}
+                        />
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Add chapter button */}
       <div className="flex gap-2 mb-6">
         <Button variant="outline" size="sm" onClick={addChapter}>

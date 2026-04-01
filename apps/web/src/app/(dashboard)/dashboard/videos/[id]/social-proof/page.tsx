@@ -95,6 +95,46 @@ export default function SocialProofPage({ params }: { params: Promise<{ id: stri
         </div>
       )}
 
+      {/* Preview */}
+      <Card className="mb-6">
+        <CardTitle className="mb-4">Preview</CardTitle>
+        <CardContent>
+          <p className="text-xs text-muted-foreground mb-2">Preview</p>
+          <div className="relative bg-black rounded-lg aspect-video overflow-hidden">
+            {/* Fake progress bar */}
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+              <div className="h-full w-[35%] bg-primary" />
+            </div>
+            {/* Play icon hint */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+                <div className="w-0 h-0 border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent border-l-[14px] border-l-white/60 ml-1" />
+              </div>
+            </div>
+            {/* Toast notification */}
+            <div className="absolute bottom-4 left-4 animate-in slide-in-from-left fade-in duration-500">
+              <div className="bg-white rounded-lg shadow-lg px-4 py-3 max-w-[220px]">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                    <Users className="w-3 h-3 text-primary" />
+                  </div>
+                  <p className="text-xs text-gray-800 font-medium leading-snug">
+                    {notifications.length > 0 && notifications[0].message.trim()
+                      ? notifications[0].message
+                      : "John from Paris just purchased this course"}
+                  </p>
+                </div>
+                {notifications.length > 0 && (
+                  <p className="text-[10px] text-gray-400 mt-1 ml-8">
+                    Every {notifications[0].interval}s
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Add notification button */}
       <div className="flex gap-2 mb-6">
         <Button variant="outline" size="sm" onClick={addNotification}>
