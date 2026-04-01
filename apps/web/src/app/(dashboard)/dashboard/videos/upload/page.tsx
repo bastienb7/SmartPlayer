@@ -64,12 +64,29 @@ export default function UploadPage() {
       // 3. Confirm upload → triggers transcoding
       setState("processing");
       await api.confirmUpload(video.id);
+      setProgress(80);
 
-      setProgress(100);
-      setState("done");
+      // 4. Poll status every 3s until ready or error
+      const videoId = video.id;
+      const poll = setInterval(async () => {
+        try {
+          const data = await api.getVideo(videoId);
+          const v = data.video || data;
+          if (v.status === "ready") {
+            clearInterval(poll);
+            setProgress(100);
+            setState("done");
+            setTimeout(() => router.push(`/dashboard/videos/${videoId}`), 1500);
+          } else if (v.status === "error") {
+            clearInterval(poll);
+            setState("error");
+            setError("Transcoding failed. Please try uploading again.");
+          }
+        } catch { /* ignore polling errors */ }
+      }, 3000);
 
-      // Redirect to video detail
-      setTimeout(() => router.push(`/dashboard/videos/${video.id}`), 1500);
+      // Safety: stop polling after 10 minutes
+      setTimeout(() => clearInterval(poll), 600_000);
     } catch (err: any) {
       setState("error");
       setError(err.message || "Upload failed");
@@ -160,9 +177,14 @@ export default function UploadPage() {
                   />
                 </div>
                 {state === "processing" && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Generating 360p, 480p, 720p, 1080p renditions...
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Generating HLS renditions (360p, 480p, 720p, 1080p)...
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      This takes 1-3 minutes depending on video size. You can leave this page — transcoding continues in the background.
+                    </p>
                   </div>
                 )}
               </div>

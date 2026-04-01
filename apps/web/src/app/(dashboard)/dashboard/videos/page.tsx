@@ -71,6 +71,24 @@ export default function VideosPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Auto-refresh while videos are processing
+  useEffect(() => {
+    const hasProcessing = videos.some((v) => v.status === "processing" || v.status === "uploading");
+    if (!hasProcessing) return;
+    const interval = setInterval(() => {
+      api.getVideosWithFeatures()
+        .catch(() => api.getVideos())
+        .then((data) => setVideos((data.videos || []).map((v: any) => ({
+          ...v,
+          createdAt: v.createdAt || v.created_at,
+          thumbnailUrl: v.thumbnailUrl || v.poster_url || v.posterUrl,
+          features: v.features || [],
+        }))))
+        .catch(() => {});
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [videos]);
+
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
