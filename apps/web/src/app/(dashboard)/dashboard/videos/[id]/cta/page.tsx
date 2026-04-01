@@ -1,10 +1,11 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, GripVertical, MousePointer } from "lucide-react";
+import { Plus, Trash2, GripVertical, MousePointer, Loader2, AlertCircle, Save, Check } from "lucide-react";
+import { api } from "@/lib/api-client";
 
 interface CTAItem {
   id: string;
@@ -13,25 +14,58 @@ interface CTAItem {
   text: string;
   url: string;
   buttonColor: string;
+  buttonTextColor: string;
+  openInNewTab: boolean;
+  sortOrder: number;
+  _isNew?: boolean;
 }
 
 export default function CTAEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [ctas, setCTAs] = useState<CTAItem[]>([
-    { id: "1", timestamp: 10, duration: 8, text: "Get Started Now!", url: "https://example.com", buttonColor: "#6366f1" },
-    { id: "2", timestamp: 30, duration: 10, text: "Limited Time Offer", url: "https://example.com/offer", buttonColor: "#ef4444" },
-  ]);
+  const [playerId, setPlayerId] = useState<string>("");
+  const [ctas, setCTAs] = useState<CTAItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    api.getPlayerConfig(id)
+      .then((player) => {
+        setPlayerId(player.id);
+        return api.getCTAs(player.id);
+      })
+      .then((data) => {
+        setCTAs(data.ctas.map((c: any) => ({
+          id: c.id,
+          timestamp: c.timestamp,
+          duration: c.duration,
+          text: c.text,
+          url: c.url,
+          buttonColor: c.buttonColor || "#6366f1",
+          buttonTextColor: c.buttonTextColor || "#ffffff",
+          openInNewTab: c.openInNewTab ?? true,
+          sortOrder: c.sortOrder || 0,
+        })));
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [id]);
 
   const addCTA = () => {
     setCTAs([
       ...ctas,
       {
-        id: Date.now().toString(),
+        id: `new-${Date.now()}`,
         timestamp: 0,
         duration: 10,
         text: "Click Here",
         url: "https://",
         buttonColor: "#6366f1",
+        buttonTextColor: "#ffffff",
+        openInNewTab: true,
+        sortOrder: ctas.length,
+        _isNew: true,
       },
     ]);
   };
@@ -40,9 +74,71 @@ export default function CTAEditorPage({ params }: { params: Promise<{ id: string
     setCTAs(ctas.map((c) => (c.id === ctaId ? { ...c, [key]: value } : c)));
   };
 
-  const deleteCTA = (ctaId: string) => {
+  const deleteCTAItem = async (ctaId: string) => {
+    const cta = ctas.find((c) => c.id === ctaId);
+    if (cta && !cta._isNew) {
+      try {
+        await api.deleteCTA(ctaId);
+      } catch (err: any) {
+        setError(err.message);
+        return;
+      }
+    }
     setCTAs(ctas.filter((c) => c.id !== ctaId));
   };
+
+  const handleSave = async () => {
+    if (!playerId) return;
+    setSaving(true);
+    setError("");
+
+    try {
+      const updatedCTAs: CTAItem[] = [];
+      for (const cta of ctas) {
+        if (cta._isNew) {
+          const created = await api.createCTA({
+            playerId,
+            timestamp: cta.timestamp,
+            duration: cta.duration,
+            text: cta.text,
+            url: cta.url,
+            buttonColor: cta.buttonColor,
+            buttonTextColor: cta.buttonTextColor,
+            openInNewTab: cta.openInNewTab,
+            sortOrder: cta.sortOrder,
+          });
+          updatedCTAs.push({ ...cta, id: created.id, _isNew: false });
+        } else {
+          await api.updateCTA(cta.id, {
+            timestamp: cta.timestamp,
+            duration: cta.duration,
+            text: cta.text,
+            url: cta.url,
+            buttonColor: cta.buttonColor,
+            buttonTextColor: cta.buttonTextColor,
+            openInNewTab: cta.openInNewTab,
+            sortOrder: cta.sortOrder,
+          });
+          updatedCTAs.push(cta);
+        }
+      }
+      setCTAs(updatedCTAs);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl">
@@ -51,16 +147,31 @@ export default function CTAEditorPage({ params }: { params: Promise<{ id: string
           <h1 className="text-2xl font-bold">CTA Buttons</h1>
           <p className="text-muted-foreground">Configure call-to-action buttons that appear during the video.</p>
         </div>
-        <Button onClick={addCTA}>
-          <Plus className="w-4 h-4 mr-2" /> Add CTA
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={addCTA}>
+            <Plus className="w-4 h-4 mr-2" /> Add CTA
+          </Button>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : saved ? <Check className="w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+            {saved ? "Saved!" : "Save"}
+          </Button>
+        </div>
       </div>
+
+      {error && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm mb-6">
+          <AlertCircle className="w-4 h-4" /> {error}
+        </div>
+      )}
 
       {ctas.length === 0 ? (
         <Card>
           <div className="flex flex-col items-center gap-4 py-12">
             <MousePointer className="w-12 h-12 text-muted-foreground" />
             <p className="text-muted-foreground">No CTAs configured yet. Add one to get started.</p>
+            <Button onClick={addCTA}>
+              <Plus className="w-4 h-4 mr-2" /> Add CTA
+            </Button>
           </div>
         </Card>
       ) : (
@@ -74,9 +185,9 @@ export default function CTAEditorPage({ params }: { params: Promise<{ id: string
                 <CardContent className="flex-1 p-0">
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-sm font-medium text-muted-foreground">
-                      CTA #{index + 1}
+                      CTA #{index + 1} {cta._isNew && <span className="text-primary">(new)</span>}
                     </span>
-                    <Button variant="ghost" size="icon" onClick={() => deleteCTA(cta.id)}>
+                    <Button variant="ghost" size="icon" onClick={() => deleteCTAItem(cta.id)}>
                       <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>
                   </div>
@@ -100,7 +211,7 @@ export default function CTAEditorPage({ params }: { params: Promise<{ id: string
                       <Input
                         type="number"
                         value={cta.timestamp}
-                        onChange={(e) => updateCTA(cta.id, "timestamp", parseFloat(e.target.value))}
+                        onChange={(e) => updateCTA(cta.id, "timestamp", parseFloat(e.target.value) || 0)}
                       />
                     </div>
                     <div>
@@ -108,7 +219,7 @@ export default function CTAEditorPage({ params }: { params: Promise<{ id: string
                       <Input
                         type="number"
                         value={cta.duration}
-                        onChange={(e) => updateCTA(cta.id, "duration", parseInt(e.target.value))}
+                        onChange={(e) => updateCTA(cta.id, "duration", parseInt(e.target.value) || 10)}
                       />
                     </div>
                     <div>
@@ -125,6 +236,17 @@ export default function CTAEditorPage({ params }: { params: Promise<{ id: string
                           onChange={(e) => updateCTA(cta.id, "buttonColor", e.target.value)}
                         />
                       </div>
+                    </div>
+                    <div className="flex items-end">
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={cta.openInNewTab}
+                          onChange={(e) => updateCTA(cta.id, "openInNewTab", e.target.checked)}
+                          className="rounded"
+                        />
+                        Open in new tab
+                      </label>
                     </div>
                   </div>
                 </CardContent>

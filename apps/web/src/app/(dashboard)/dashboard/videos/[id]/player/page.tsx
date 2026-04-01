@@ -1,10 +1,11 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Save, Play, Pause, Eye, Timer, MousePointer, Gauge } from "lucide-react";
+import { Save, Play, Pause, Eye, Timer, MousePointer, Gauge, Loader2, Check, AlertCircle } from "lucide-react";
+import { api } from "@/lib/api-client";
 
 interface ToggleProps {
   label: string;
@@ -38,25 +39,111 @@ function FeatureToggle({ label, description, enabled, onToggle, icon }: TogglePr
 
 export default function PlayerConfigPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
 
-  const [config, setConfig] = useState({
-    autoplay: true,
+  const [autoplayConfig, setAutoplayConfig] = useState({
+    enabled: true,
     mutedMessage: "Your video has already started",
     clickMessage: "Click to listen",
+    overlayOpacity: 0.85,
+  });
+
+  const [progressBarConfig, setProgressBarConfig] = useState({
+    enabled: true,
     fictitious: true,
     fastPhaseEnd: 0.2,
     slowPhaseEnd: 0.8,
-    recoveryThumbnail: false,
-    recoveryDelay: 2000,
-    resumePlay: true,
-    miniHook: false,
-    turboSpeed: false,
-    primaryColor: "#6366f1",
-    borderRadius: 8,
-    controlsAutoHide: true,
+    fastPhaseDisplay: 0.5,
+    slowPhaseDisplay: 0.85,
   });
 
-  const update = (key: string, value: any) => setConfig((c) => ({ ...c, [key]: value }));
+  const [recoveryThumbnailConfig, setRecoveryThumbnailConfig] = useState({
+    enabled: false,
+    imageUrl: "",
+    delayMs: 2000,
+    message: "",
+  });
+
+  const [resumePlayConfig, setResumePlayConfig] = useState({
+    enabled: true,
+    maxAgeDays: 7,
+    promptMessage: "Continue where you left off?",
+  });
+
+  const [miniHookConfig, setMiniHookConfig] = useState({
+    enabled: false,
+    hooks: [] as Array<{ type: string; triggerAtPercent: number; text: string; durationMs: number }>,
+  });
+
+  const [turboSpeedConfig, setTurboSpeedConfig] = useState({
+    enabled: false,
+    minSpeed: 0.95,
+    maxSpeed: 1.15,
+  });
+
+  const [styleConfig, setStyleConfig] = useState({
+    primaryColor: "#6366f1",
+    backgroundColor: "#000000",
+    controlsBackground: "rgba(0,0,0,0.7)",
+    controlsColor: "#ffffff",
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    borderRadius: 8,
+    showControls: true,
+    controlsAutoHide: true,
+    controlsAutoHideMs: 3000,
+  });
+
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
+
+  useEffect(() => {
+    api.getPlayerConfig(id)
+      .then((player) => {
+        if (player.autoplayConfig) setAutoplayConfig(player.autoplayConfig);
+        if (player.progressBarConfig) setProgressBarConfig(player.progressBarConfig);
+        if (player.recoveryThumbnailConfig) setRecoveryThumbnailConfig(player.recoveryThumbnailConfig);
+        if (player.resumePlayConfig) setResumePlayConfig(player.resumePlayConfig);
+        if (player.miniHookConfig) setMiniHookConfig(player.miniHookConfig);
+        if (player.turboSpeedConfig) setTurboSpeedConfig(player.turboSpeedConfig);
+        if (player.styleConfig) setStyleConfig(player.styleConfig);
+        if (player.analyticsEnabled !== undefined) setAnalyticsEnabled(player.analyticsEnabled);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      await api.updatePlayerConfig(id, {
+        autoplayConfig,
+        progressBarConfig,
+        recoveryThumbnailConfig,
+        resumePlayConfig,
+        miniHookConfig,
+        turboSpeedConfig,
+        styleConfig,
+        analyticsEnabled,
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl">
@@ -65,10 +152,17 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
           <h1 className="text-2xl font-bold">Player Settings</h1>
           <p className="text-muted-foreground">Configure the player behavior for this video.</p>
         </div>
-        <Button>
-          <Save className="w-4 h-4 mr-2" /> Save Changes
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : saved ? <Check className="w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+          {saved ? "Saved!" : "Save Changes"}
         </Button>
       </div>
+
+      {error && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm mb-6">
+          <AlertCircle className="w-4 h-4" /> {error}
+        </div>
+      )}
 
       {/* Smart Autoplay */}
       <Card className="mb-6">
@@ -79,23 +173,23 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
           <FeatureToggle
             label="Enable Smart Autoplay"
             description="Video starts playing muted with a persuasive overlay"
-            enabled={config.autoplay}
-            onToggle={(v) => update("autoplay", v)}
+            enabled={autoplayConfig.enabled}
+            onToggle={(v) => setAutoplayConfig((c) => ({ ...c, enabled: v }))}
           />
-          {config.autoplay && (
+          {autoplayConfig.enabled && (
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div>
                 <label className="text-sm font-medium mb-1.5 block">Muted Message</label>
                 <Input
-                  value={config.mutedMessage}
-                  onChange={(e) => update("mutedMessage", e.target.value)}
+                  value={autoplayConfig.mutedMessage}
+                  onChange={(e) => setAutoplayConfig((c) => ({ ...c, mutedMessage: e.target.value }))}
                 />
               </div>
               <div>
                 <label className="text-sm font-medium mb-1.5 block">Click Message</label>
                 <Input
-                  value={config.clickMessage}
-                  onChange={(e) => update("clickMessage", e.target.value)}
+                  value={autoplayConfig.clickMessage}
+                  onChange={(e) => setAutoplayConfig((c) => ({ ...c, clickMessage: e.target.value }))}
                 />
               </div>
             </div>
@@ -112,10 +206,10 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
           <FeatureToggle
             label="Enable Fictitious Progress"
             description="Progress bar moves fast at start, making videos feel shorter"
-            enabled={config.fictitious}
-            onToggle={(v) => update("fictitious", v)}
+            enabled={progressBarConfig.fictitious}
+            onToggle={(v) => setProgressBarConfig((c) => ({ ...c, fictitious: v }))}
           />
-          {config.fictitious && (
+          {progressBarConfig.fictitious && (
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div>
                 <label className="text-sm font-medium mb-1.5 block">Fast Phase End (0-1)</label>
@@ -124,8 +218,8 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
                   step="0.05"
                   min="0"
                   max="1"
-                  value={config.fastPhaseEnd}
-                  onChange={(e) => update("fastPhaseEnd", parseFloat(e.target.value))}
+                  value={progressBarConfig.fastPhaseEnd}
+                  onChange={(e) => setProgressBarConfig((c) => ({ ...c, fastPhaseEnd: parseFloat(e.target.value) }))}
                 />
               </div>
               <div>
@@ -135,8 +229,8 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
                   step="0.05"
                   min="0"
                   max="1"
-                  value={config.slowPhaseEnd}
-                  onChange={(e) => update("slowPhaseEnd", parseFloat(e.target.value))}
+                  value={progressBarConfig.slowPhaseEnd}
+                  onChange={(e) => setProgressBarConfig((c) => ({ ...c, slowPhaseEnd: parseFloat(e.target.value) }))}
                 />
               </div>
             </div>
@@ -153,30 +247,36 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
           <FeatureToggle
             label="Recovery Thumbnail"
             description="Show an image overlay when viewer pauses the video"
-            enabled={config.recoveryThumbnail}
-            onToggle={(v) => update("recoveryThumbnail", v)}
+            enabled={recoveryThumbnailConfig.enabled}
+            onToggle={(v) => setRecoveryThumbnailConfig((c) => ({ ...c, enabled: v }))}
             icon={<Eye className="w-4 h-4" />}
           />
           <FeatureToggle
             label="Resume Play"
             description="Allow viewers to continue from where they left off"
-            enabled={config.resumePlay}
-            onToggle={(v) => update("resumePlay", v)}
+            enabled={resumePlayConfig.enabled}
+            onToggle={(v) => setResumePlayConfig((c) => ({ ...c, enabled: v }))}
             icon={<Pause className="w-4 h-4" />}
           />
           <FeatureToggle
             label="Mini-Hook"
             description="Show engagement prompts at milestones (25%, 50%, 75%)"
-            enabled={config.miniHook}
-            onToggle={(v) => update("miniHook", v)}
+            enabled={miniHookConfig.enabled}
+            onToggle={(v) => setMiniHookConfig((c) => ({ ...c, enabled: v }))}
             icon={<MousePointer className="w-4 h-4" />}
           />
           <FeatureToggle
             label="Turbo Speed"
             description="A/B test playback speeds (0.95x-1.15x) to find best conversion rate"
-            enabled={config.turboSpeed}
-            onToggle={(v) => update("turboSpeed", v)}
+            enabled={turboSpeedConfig.enabled}
+            onToggle={(v) => setTurboSpeedConfig((c) => ({ ...c, enabled: v }))}
             icon={<Gauge className="w-4 h-4" />}
+          />
+          <FeatureToggle
+            label="Analytics"
+            description="Track video engagement events (plays, pauses, CTA clicks, etc.)"
+            enabled={analyticsEnabled}
+            onToggle={setAnalyticsEnabled}
           />
         </CardContent>
       </Card>
@@ -191,13 +291,13 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
               <div className="flex gap-2">
                 <input
                   type="color"
-                  value={config.primaryColor}
-                  onChange={(e) => update("primaryColor", e.target.value)}
+                  value={styleConfig.primaryColor}
+                  onChange={(e) => setStyleConfig((c) => ({ ...c, primaryColor: e.target.value }))}
                   className="w-10 h-10 rounded border border-border cursor-pointer"
                 />
                 <Input
-                  value={config.primaryColor}
-                  onChange={(e) => update("primaryColor", e.target.value)}
+                  value={styleConfig.primaryColor}
+                  onChange={(e) => setStyleConfig((c) => ({ ...c, primaryColor: e.target.value }))}
                 />
               </div>
             </div>
@@ -205,8 +305,8 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
               <label className="text-sm font-medium mb-1.5 block">Border Radius (px)</label>
               <Input
                 type="number"
-                value={config.borderRadius}
-                onChange={(e) => update("borderRadius", parseInt(e.target.value))}
+                value={styleConfig.borderRadius}
+                onChange={(e) => setStyleConfig((c) => ({ ...c, borderRadius: parseInt(e.target.value) || 0 }))}
               />
             </div>
           </div>

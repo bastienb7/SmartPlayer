@@ -1,13 +1,15 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Plus, Trash2, Image, Type, Play, Trophy, Beaker, BarChart3, Smartphone, Monitor, Upload,
+  Loader2, AlertCircle, Save, Check,
 } from "lucide-react";
+import { api } from "@/lib/api-client";
 
 type VariantType = "text" | "image" | "gif";
 
@@ -32,37 +34,69 @@ interface Variant {
   conversionRate: number;
   isWinner: boolean;
   isEliminated: boolean;
+  _isNew?: boolean;
 }
 
 export default function HeadlinesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const [playerId, setPlayerId] = useState("");
+  const [headlineId, setHeadlineId] = useState<string | null>(null);
   const [abTestEnabled, setAbTestEnabled] = useState(false);
-  const [abTestRunning, setAbTestRunning] = useState(false);
+  const [abTestStatus, setAbTestStatus] = useState<string>("idle");
   const [includeNoHeadline, setIncludeNoHeadline] = useState(false);
   const [position, setPosition] = useState<string>("above");
   const [animation, setAnimation] = useState<string>("fade");
-  const [variants, setVariants] = useState<Variant[]>([
-    {
-      id: "v1",
-      type: "text",
-      text: "Watch This Amazing Video Now!",
-      style: { fontSize: "28px", fontWeight: "700", color: "#ffffff", textAlign: "center" },
-      weight: 100,
-      impressions: 1234,
-      plays: 987,
-      conversions: 45,
-      conversionRate: 4.56,
-      isWinner: false,
-      isEliminated: false,
-    },
-  ]);
+  const [variants, setVariants] = useState<Variant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    api.getPlayerConfig(id)
+      .then((player) => {
+        setPlayerId(player.id);
+        return api.getHeadlines(player.id);
+      })
+      .then((data) => {
+        if (data.headline) {
+          setHeadlineId(data.headline.id);
+          setAbTestEnabled(data.headline.abTestEnabled || false);
+          setAbTestStatus(data.headline.abTestStatus || "idle");
+          setIncludeNoHeadline(data.headline.includeNoHeadlineVariant || false);
+          setPosition(data.headline.position || "above");
+          setAnimation(data.headline.animation || "fade");
+        }
+        if (data.variants?.length) {
+          setVariants(data.variants.map((v: any) => ({
+            id: v.id,
+            type: v.type || "text",
+            text: v.text,
+            imageUrl: v.imageUrl,
+            mobileImageUrl: v.mobileImageUrl,
+            altText: v.altText,
+            style: v.style || {},
+            weight: v.weight || 100,
+            impressions: v.impressions || 0,
+            plays: v.plays || 0,
+            conversions: v.conversions || 0,
+            conversionRate: v.conversionRate || 0,
+            isWinner: v.isWinner || false,
+            isEliminated: v.isEliminated || false,
+          })));
+        }
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [id]);
 
   const addVariant = (type: VariantType) => {
-    const newVariant: Variant = {
-      id: Date.now().toString(),
+    setVariants([...variants, {
+      id: `new-${Date.now()}`,
       type,
       text: type === "text" ? "New headline variant" : undefined,
       imageUrl: type !== "text" ? "" : undefined,
+      style: type === "text" ? { fontSize: "28px", fontWeight: "700", color: "#ffffff", textAlign: "center" } : undefined,
       weight: 100,
       impressions: 0,
       plays: 0,
@@ -70,17 +104,124 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
       conversionRate: 0,
       isWinner: false,
       isEliminated: false,
-    };
-    setVariants([...variants, newVariant]);
+      _isNew: true,
+    }]);
   };
 
   const updateVariant = (vId: string, updates: Partial<Variant>) => {
     setVariants(variants.map((v) => (v.id === vId ? { ...v, ...updates } : v)));
   };
 
-  const deleteVariant = (vId: string) => {
+  const deleteVariant = async (vId: string) => {
+    const variant = variants.find((v) => v.id === vId);
+    if (variant && !variant._isNew) {
+      try {
+        await api.deleteHeadlineVariant(vId);
+      } catch (err: any) {
+        setError(err.message);
+        return;
+      }
+    }
     setVariants(variants.filter((v) => v.id !== vId));
   };
+
+  const handleSave = async () => {
+    if (!playerId) return;
+    setSaving(true);
+    setError("");
+
+    try {
+      // Save/update headline config
+      const headline = await api.saveHeadline({
+        playerId,
+        abTestEnabled,
+        includeNoHeadlineVariant: includeNoHeadline,
+        position,
+        animation,
+      });
+      setHeadlineId(headline.id);
+
+      // Save variants
+      const updatedVariants: Variant[] = [];
+      for (let i = 0; i < variants.length; i++) {
+        const v = variants[i];
+        const variantData = {
+          headlineId: headline.id,
+          type: v.type,
+          text: v.text,
+          imageUrl: v.imageUrl,
+          mobileImageUrl: v.mobileImageUrl,
+          altText: v.altText,
+          style: v.style,
+          weight: v.weight,
+          sortOrder: i,
+        };
+
+        if (v._isNew) {
+          const created = await api.createHeadlineVariant(variantData);
+          updatedVariants.push({ ...v, id: created.id, _isNew: false });
+        } else {
+          await api.updateHeadlineVariant(v.id, variantData);
+          updatedVariants.push({ ...v, _isNew: false });
+        }
+      }
+      setVariants(updatedVariants);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleStartTest = async () => {
+    if (!headlineId) {
+      await handleSave();
+    }
+    if (!headlineId) return;
+    try {
+      await api.startHeadlineTest(headlineId);
+      setAbTestStatus("running");
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleStopTest = async () => {
+    if (!headlineId) return;
+    try {
+      await api.stopHeadlineTest(headlineId);
+      setAbTestStatus("completed");
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleDeclareWinner = async (variantId: string) => {
+    if (!headlineId) return;
+    try {
+      await api.declareHeadlineWinner(headlineId, variantId);
+      setVariants(variants.map((v) => ({
+        ...v,
+        isWinner: v.id === variantId,
+        isEliminated: v.id !== variantId,
+      })));
+      setAbTestStatus("completed");
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const abTestRunning = abTestStatus === "running";
 
   return (
     <div className="max-w-4xl">
@@ -91,8 +232,17 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
             Create text, image, or GIF headlines above your video. A/B test to find the best performer.
           </p>
         </div>
-        <Button>Save Changes</Button>
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : saved ? <Check className="w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+          {saved ? "Saved!" : "Save Changes"}
+        </Button>
       </div>
+
+      {error && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm mb-6">
+          <AlertCircle className="w-4 h-4" /> {error}
+        </div>
+      )}
 
       {/* Display Settings */}
       <Card className="mb-6">
@@ -169,13 +319,16 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
 
               <div className="flex gap-3 mt-4">
                 {!abTestRunning ? (
-                  <Button onClick={() => setAbTestRunning(true)}>
+                  <Button onClick={handleStartTest}>
                     <Play className="w-4 h-4 mr-2" /> Start Test
                   </Button>
                 ) : (
-                  <Button variant="destructive" onClick={() => setAbTestRunning(false)}>
+                  <Button variant="destructive" onClick={handleStopTest}>
                     Stop Test
                   </Button>
+                )}
+                {abTestStatus === "completed" && (
+                  <Badge variant="success">Test Completed</Badge>
                 )}
               </div>
             </>
@@ -214,22 +367,6 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
                 <div className="text-xs text-muted-foreground">Tests whether any headline helps at all</div>
               </div>
             </div>
-            {abTestRunning && (
-              <div className="flex items-center gap-6 text-sm">
-                <div className="text-center">
-                  <div className="text-muted-foreground text-xs">Views</div>
-                  <div className="font-medium">0</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-muted-foreground text-xs">Play Rate</div>
-                  <div className="font-medium">—</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-muted-foreground text-xs">Conv. Rate</div>
-                  <div className="font-medium">—</div>
-                </div>
-              </div>
-            )}
           </div>
         </Card>
       )}
@@ -248,7 +385,10 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm">Variant {String.fromCharCode(65 + index)}</span>
+                  <span className="font-medium text-sm">
+                    Variant {String.fromCharCode(65 + index)}
+                    {variant._isNew && <span className="text-primary ml-1">(new)</span>}
+                  </span>
                   <Badge variant={variant.type === "text" ? "info" : "default"}>
                     {variant.type.toUpperCase()}
                   </Badge>
@@ -415,6 +555,7 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
                 {variant.imageUrl && (
                   <div className="bg-muted rounded-lg p-4">
                     <div className="text-xs text-muted-foreground mb-2">Preview</div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={variant.imageUrl}
                       alt={variant.altText || ""}
@@ -463,7 +604,7 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
                 </div>
                 {!variant.isWinner && !variant.isEliminated && variant.impressions >= 100 && (
                   <div className="mt-3 flex justify-end">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => handleDeclareWinner(variant.id)}>
                       <Trophy className="w-3.5 h-3.5 mr-1" /> Declare Winner
                     </Button>
                   </div>

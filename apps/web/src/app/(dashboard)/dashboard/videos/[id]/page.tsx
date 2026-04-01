@@ -1,7 +1,8 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import Hls from "hls.js";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,14 +12,13 @@ import {
   Type, Loader2, AlertCircle, Zap, MousePointer2, Repeat, Layers, Gauge,
   Timer, Shield,
 } from "lucide-react";
-import { useState as useLocalState } from "react";
 import { formatDuration, formatNumber } from "@/lib/utils";
 import { api } from "@/lib/api-client";
 
 const featureLinks = [
   { href: "player", icon: Settings, label: "Player Settings" },
   { href: "headlines", icon: Type, label: "Headlines A/B" },
-  { href: "ctas", icon: MousePointer, label: "CTAs" },
+  { href: "cta", icon: MousePointer, label: "CTAs" },
   { href: "exit-intent", icon: Zap, label: "Exit-Intent" },
   { href: "pixels", icon: Shield, label: "Pixels" },
   { href: "resume", icon: Repeat, label: "Resume Play" },
@@ -27,6 +27,40 @@ const featureLinks = [
   { href: "social-proof", icon: MousePointer2, label: "Social Proof" },
   { href: "page-sync", icon: Gauge, label: "Page Sync" },
 ];
+
+function VideoPlayer({ hlsUrl, posterUrl }: { hlsUrl?: string; posterUrl?: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<Hls | null>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !hlsUrl) return;
+
+    if (Hls.isSupported()) {
+      const hls = new Hls({ startLevel: -1 });
+      hlsRef.current = hls;
+      hls.loadSource(hlsUrl);
+      hls.attachMedia(video);
+    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      video.src = hlsUrl;
+    }
+
+    return () => {
+      hlsRef.current?.destroy();
+      hlsRef.current = null;
+    };
+  }, [hlsUrl]);
+
+  return (
+    <video
+      ref={videoRef}
+      controls
+      playsInline
+      poster={posterUrl}
+      className="w-full h-full rounded-lg bg-black"
+    />
+  );
+}
 
 export default function VideoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -128,12 +162,23 @@ export default function VideoDetailPage({ params }: { params: Promise<{ id: stri
         <Card>
           <CardTitle className="mb-4">Preview</CardTitle>
           <CardContent>
-            <div className="aspect-video bg-black rounded-lg flex items-center justify-center overflow-hidden">
-              {video.posterUrl ? (
+            <div className="aspect-video bg-black rounded-lg overflow-hidden">
+              {video.status === "ready" && video.hlsUrl ? (
+                <VideoPlayer hlsUrl={video.hlsUrl} posterUrl={video.posterUrl} />
+              ) : video.posterUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={video.posterUrl} alt={video.title} className="w-full h-full object-cover" />
               ) : (
-                <Play className="w-12 h-12 text-muted-foreground" />
+                <div className="w-full h-full flex items-center justify-center">
+                  {video.status === "processing" ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="w-10 h-10 animate-spin text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Transcoding...</span>
+                    </div>
+                  ) : (
+                    <Play className="w-12 h-12 text-muted-foreground" />
+                  )}
+                </div>
               )}
             </div>
           </CardContent>
