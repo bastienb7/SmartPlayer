@@ -249,7 +249,7 @@ export default function CTAEditorPage({ params }: { params: Promise<{ id: string
                   )}
                 </div>
                 <div className="text-xs text-muted-foreground mt-2 text-center">
-                  Appears at <span className="font-medium text-foreground">{cta.timestamp}s</span> for <span className="font-medium text-foreground">{cta.duration}s</span>
+                  Appears at <span className="font-medium text-foreground">{cta.timestamp}s</span>{cta.duration === -1 ? <span> and <span className="font-medium text-foreground">stays forever</span></span> : <span> for <span className="font-medium text-foreground">{cta.duration}s</span></span>}
                 </div>
               </div>
 
@@ -274,8 +274,24 @@ export default function CTAEditorPage({ params }: { params: Promise<{ id: string
                     <Input type="number" value={cta.timestamp} onChange={(e) => updateCTA(cta.id, "timestamp", parseFloat(e.target.value) || 0)} />
                   </div>
                   <div>
-                    <label className="text-sm font-medium mb-1.5 block">Duration (seconds)</label>
-                    <Input type="number" value={cta.duration} onChange={(e) => updateCTA(cta.id, "duration", parseInt(e.target.value) || 10)} />
+                    <label className="text-sm font-medium mb-1.5 block">Duration</label>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={cta.duration === -1 ? "forever" : "timed"}
+                        onChange={(e) => updateCTA(cta.id, "duration", e.target.value === "forever" ? -1 : 10)}
+                        className="h-10 rounded-lg border border-border bg-background px-3 text-sm"
+                      >
+                        <option value="timed">Timed</option>
+                        <option value="forever">Stay forever</option>
+                      </select>
+                      {cta.duration !== -1 && (
+                        <div className="flex items-center gap-1 flex-1">
+                          <Input type="number" value={cta.duration} onChange={(e) => updateCTA(cta.id, "duration", parseInt(e.target.value) || 10)} />
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">sec</span>
+                        </div>
+                      )}
+                    </div>
+                    {cta.duration === -1 && <p className="text-xs text-muted-foreground mt-1">CTA stays visible until the end of the video.</p>}
                   </div>
                 </div>
 
