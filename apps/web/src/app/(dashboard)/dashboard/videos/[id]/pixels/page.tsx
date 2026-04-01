@@ -15,7 +15,6 @@ interface PixelItem {
   platform: Platform;
   pixelId: string;
   events: Array<{ eventName: string; triggerTimestamp: number }>;
-  _isNew?: boolean;
 }
 
 const platformLabels: Record<Platform, string> = {
@@ -32,7 +31,6 @@ const platformColors: Record<Platform, string> = {
 
 export default function PixelsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [playerId, setPlayerId] = useState("");
   const [pixels, setPixels] = useState<PixelItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -42,16 +40,15 @@ export default function PixelsPage({ params }: { params: Promise<{ id: string }>
   useEffect(() => {
     api.getPlayerConfig(id)
       .then((player) => {
-        setPlayerId(player.id);
-        return api.getPixels(player.id);
-      })
-      .then((data) => {
-        setPixels(data.pixels.map((p: any) => ({
-          id: p.id,
-          platform: p.platform,
-          pixelId: p.pixelId,
-          events: p.events || [],
-        })));
+        const pixelConfig = player.pixelConfig;
+        if (Array.isArray(pixelConfig) && pixelConfig.length > 0) {
+          setPixels(pixelConfig.map((p: any, i: number) => ({
+            id: p.id || `px-${i}`,
+            platform: p.platform || "facebook",
+            pixelId: p.pixelId || "",
+            events: p.events || [],
+          })));
+        }
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -59,11 +56,10 @@ export default function PixelsPage({ params }: { params: Promise<{ id: string }>
 
   const addPixel = (platform: Platform) => {
     setPixels([...pixels, {
-      id: `new-${Date.now()}`,
+      id: `px-${Date.now()}`,
       platform,
       pixelId: "",
       events: [],
-      _isNew: true,
     }]);
   };
 
@@ -71,16 +67,7 @@ export default function PixelsPage({ params }: { params: Promise<{ id: string }>
     setPixels(pixels.map((p) => (p.id === pixelId ? { ...p, ...updates } : p)));
   };
 
-  const deletePixelItem = async (pixelId: string) => {
-    const pixel = pixels.find((p) => p.id === pixelId);
-    if (pixel && !pixel._isNew) {
-      try {
-        await api.deletePixel(pixelId);
-      } catch (err: any) {
-        setError(err.message);
-        return;
-      }
-    }
+  const deletePixel = (pixelId: string) => {
     setPixels(pixels.filter((p) => p.id !== pixelId));
   };
 
@@ -108,32 +95,12 @@ export default function PixelsPage({ params }: { params: Promise<{ id: string }>
   };
 
   const handleSave = async () => {
-    if (!playerId) return;
     setSaving(true);
     setError("");
-
     try {
-      const updated: PixelItem[] = [];
-      for (const pixel of pixels) {
-        if (!pixel.pixelId.trim()) continue;
-
-        if (pixel._isNew) {
-          const created = await api.createPixel({
-            playerId,
-            platform: pixel.platform,
-            pixelId: pixel.pixelId,
-            events: pixel.events,
-          });
-          updated.push({ ...pixel, id: created.id, _isNew: false });
-        } else {
-          await api.updatePixel(pixel.id, {
-            pixelId: pixel.pixelId,
-            events: pixel.events,
-          });
-          updated.push({ ...pixel, _isNew: false });
-        }
-      }
-      setPixels(updated);
+      // Filter out pixels without a pixelId
+      const validPixels = pixels.filter((p) => p.pixelId.trim());
+      await api.updatePlayerConfig(id, { pixelConfig: validPixels });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err: any) {
@@ -203,13 +170,10 @@ export default function PixelsPage({ params }: { params: Promise<{ id: string }>
           {pixels.map((pixel) => (
             <Card key={pixel.id}>
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Badge variant={platformColors[pixel.platform] as any}>
-                    {platformLabels[pixel.platform]}
-                  </Badge>
-                  {pixel._isNew && <span className="text-xs text-primary">(new)</span>}
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => deletePixelItem(pixel.id)}>
+                <Badge variant={platformColors[pixel.platform] as any}>
+                  {platformLabels[pixel.platform]}
+                </Badge>
+                <Button variant="ghost" size="icon" onClick={() => deletePixel(pixel.id)}>
                   <Trash2 className="w-4 h-4 text-destructive" />
                 </Button>
               </div>
@@ -235,7 +199,7 @@ export default function PixelsPage({ params }: { params: Promise<{ id: string }>
                     </Button>
                   </div>
                   {pixel.events.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">No custom events. Standard events (PageView, ViewContent) fire automatically.</p>
+                    <p className="text-xs text-muted-foreground">No custom events. Standard events fire automatically.</p>
                   ) : (
                     <div className="space-y-2">
                       {pixel.events.map((evt, i) => (
@@ -243,7 +207,7 @@ export default function PixelsPage({ params }: { params: Promise<{ id: string }>
                           <Input
                             value={evt.eventName}
                             onChange={(e) => updateEvent(pixel.id, i, { eventName: e.target.value })}
-                            placeholder="Event name (e.g., Purchase)"
+                            placeholder="Event name"
                             className="flex-1"
                           />
                           <Input

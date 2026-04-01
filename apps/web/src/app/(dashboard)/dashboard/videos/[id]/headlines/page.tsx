@@ -34,19 +34,29 @@ interface Variant {
   conversionRate: number;
   isWinner: boolean;
   isEliminated: boolean;
-  _isNew?: boolean;
 }
+
+interface HeadlinesConfig {
+  position: string;
+  animation: string;
+  abTestEnabled: boolean;
+  abTestStatus: string;
+  includeNoHeadlineVariant: boolean;
+  variants: Variant[];
+}
+
+const defaultConfig: HeadlinesConfig = {
+  position: "above",
+  animation: "fade",
+  abTestEnabled: false,
+  abTestStatus: "idle",
+  includeNoHeadlineVariant: false,
+  variants: [],
+};
 
 export default function HeadlinesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [playerId, setPlayerId] = useState("");
-  const [headlineId, setHeadlineId] = useState<string | null>(null);
-  const [abTestEnabled, setAbTestEnabled] = useState(false);
-  const [abTestStatus, setAbTestStatus] = useState<string>("idle");
-  const [includeNoHeadline, setIncludeNoHeadline] = useState(false);
-  const [position, setPosition] = useState<string>("above");
-  const [animation, setAnimation] = useState<string>("fade");
-  const [variants, setVariants] = useState<Variant[]>([]);
+  const [config, setConfig] = useState<HeadlinesConfig>(defaultConfig);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -55,35 +65,31 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
   useEffect(() => {
     api.getPlayerConfig(id)
       .then((player) => {
-        setPlayerId(player.id);
-        return api.getHeadlines(player.id);
-      })
-      .then((data) => {
-        if (data.headline) {
-          setHeadlineId(data.headline.id);
-          setAbTestEnabled(data.headline.abTestEnabled || false);
-          setAbTestStatus(data.headline.abTestStatus || "idle");
-          setIncludeNoHeadline(data.headline.includeNoHeadlineVariant || false);
-          setPosition(data.headline.position || "above");
-          setAnimation(data.headline.animation || "fade");
-        }
-        if (data.variants?.length) {
-          setVariants(data.variants.map((v: any) => ({
-            id: v.id,
-            type: v.type || "text",
-            text: v.text,
-            imageUrl: v.imageUrl,
-            mobileImageUrl: v.mobileImageUrl,
-            altText: v.altText,
-            style: v.style || {},
-            weight: v.weight || 100,
-            impressions: v.impressions || 0,
-            plays: v.plays || 0,
-            conversions: v.conversions || 0,
-            conversionRate: v.conversionRate || 0,
-            isWinner: v.isWinner || false,
-            isEliminated: v.isEliminated || false,
-          })));
+        const h = player.headlinesConfig;
+        if (h && typeof h === "object" && Object.keys(h).length > 0) {
+          setConfig({
+            position: h.position || "above",
+            animation: h.animation || "fade",
+            abTestEnabled: h.abTestEnabled ?? false,
+            abTestStatus: h.abTestStatus || "idle",
+            includeNoHeadlineVariant: h.includeNoHeadlineVariant ?? false,
+            variants: (h.variants || []).map((v: any, i: number) => ({
+              id: v.id || `v-${i}`,
+              type: v.type || "text",
+              text: v.text,
+              imageUrl: v.imageUrl,
+              mobileImageUrl: v.mobileImageUrl,
+              altText: v.altText,
+              style: v.style || {},
+              weight: v.weight ?? 100,
+              impressions: v.impressions ?? 0,
+              plays: v.plays ?? 0,
+              conversions: v.conversions ?? 0,
+              conversionRate: v.conversionRate ?? 0,
+              isWinner: v.isWinner ?? false,
+              isEliminated: v.isEliminated ?? false,
+            })),
+          });
         }
       })
       .catch((err) => setError(err.message))
@@ -91,81 +97,44 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
   }, [id]);
 
   const addVariant = (type: VariantType) => {
-    setVariants([...variants, {
-      id: `new-${Date.now()}`,
-      type,
-      text: type === "text" ? "New headline variant" : undefined,
-      imageUrl: type !== "text" ? "" : undefined,
-      style: type === "text" ? { fontSize: "28px", fontWeight: "700", color: "#ffffff", textAlign: "center" } : undefined,
-      weight: 100,
-      impressions: 0,
-      plays: 0,
-      conversions: 0,
-      conversionRate: 0,
-      isWinner: false,
-      isEliminated: false,
-      _isNew: true,
-    }]);
+    setConfig((c) => ({
+      ...c,
+      variants: [...c.variants, {
+        id: `v-${Date.now()}`,
+        type,
+        text: type === "text" ? "New headline variant" : undefined,
+        imageUrl: type !== "text" ? "" : undefined,
+        style: type === "text" ? { fontSize: "28px", fontWeight: "700", color: "#ffffff", textAlign: "center" } : undefined,
+        weight: 100,
+        impressions: 0,
+        plays: 0,
+        conversions: 0,
+        conversionRate: 0,
+        isWinner: false,
+        isEliminated: false,
+      }],
+    }));
   };
 
   const updateVariant = (vId: string, updates: Partial<Variant>) => {
-    setVariants(variants.map((v) => (v.id === vId ? { ...v, ...updates } : v)));
+    setConfig((c) => ({
+      ...c,
+      variants: c.variants.map((v) => (v.id === vId ? { ...v, ...updates } : v)),
+    }));
   };
 
-  const deleteVariant = async (vId: string) => {
-    const variant = variants.find((v) => v.id === vId);
-    if (variant && !variant._isNew) {
-      try {
-        await api.deleteHeadlineVariant(vId);
-      } catch (err: any) {
-        setError(err.message);
-        return;
-      }
-    }
-    setVariants(variants.filter((v) => v.id !== vId));
+  const deleteVariant = (vId: string) => {
+    setConfig((c) => ({
+      ...c,
+      variants: c.variants.filter((v) => v.id !== vId),
+    }));
   };
 
   const handleSave = async () => {
-    if (!playerId) return;
     setSaving(true);
     setError("");
-
     try {
-      // Save/update headline config
-      const headline = await api.saveHeadline({
-        playerId,
-        abTestEnabled,
-        includeNoHeadlineVariant: includeNoHeadline,
-        position,
-        animation,
-      });
-      setHeadlineId(headline.id);
-
-      // Save variants
-      const updatedVariants: Variant[] = [];
-      for (let i = 0; i < variants.length; i++) {
-        const v = variants[i];
-        const variantData = {
-          headlineId: headline.id,
-          type: v.type,
-          text: v.text,
-          imageUrl: v.imageUrl,
-          mobileImageUrl: v.mobileImageUrl,
-          altText: v.altText,
-          style: v.style,
-          weight: v.weight,
-          sortOrder: i,
-        };
-
-        if (v._isNew) {
-          const created = await api.createHeadlineVariant(variantData);
-          updatedVariants.push({ ...v, id: created.id, _isNew: false });
-        } else {
-          await api.updateHeadlineVariant(v.id, variantData);
-          updatedVariants.push({ ...v, _isNew: false });
-        }
-      }
-      setVariants(updatedVariants);
+      await api.updatePlayerConfig(id, { headlinesConfig: config });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err: any) {
@@ -175,42 +144,23 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
     }
   };
 
-  const handleStartTest = async () => {
-    if (!headlineId) {
-      await handleSave();
-    }
-    if (!headlineId) return;
-    try {
-      await api.startHeadlineTest(headlineId);
-      setAbTestStatus("running");
-    } catch (err: any) {
-      setError(err.message);
-    }
+  const toggleAbTest = (running: boolean) => {
+    setConfig((c) => ({
+      ...c,
+      abTestStatus: running ? "running" : "completed",
+    }));
   };
 
-  const handleStopTest = async () => {
-    if (!headlineId) return;
-    try {
-      await api.stopHeadlineTest(headlineId);
-      setAbTestStatus("completed");
-    } catch (err: any) {
-      setError(err.message);
-    }
-  };
-
-  const handleDeclareWinner = async (variantId: string) => {
-    if (!headlineId) return;
-    try {
-      await api.declareHeadlineWinner(headlineId, variantId);
-      setVariants(variants.map((v) => ({
+  const declareWinner = (variantId: string) => {
+    setConfig((c) => ({
+      ...c,
+      abTestStatus: "completed",
+      variants: c.variants.map((v) => ({
         ...v,
         isWinner: v.id === variantId,
         isEliminated: v.id !== variantId,
-      })));
-      setAbTestStatus("completed");
-    } catch (err: any) {
-      setError(err.message);
-    }
+      })),
+    }));
   };
 
   if (loading) {
@@ -221,7 +171,7 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
     );
   }
 
-  const abTestRunning = abTestStatus === "running";
+  const abTestRunning = config.abTestStatus === "running";
 
   return (
     <div className="max-w-4xl">
@@ -252,8 +202,8 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
             <div>
               <label className="text-sm font-medium mb-1.5 block">Position</label>
               <select
-                value={position}
-                onChange={(e) => setPosition(e.target.value)}
+                value={config.position}
+                onChange={(e) => setConfig((c) => ({ ...c, position: e.target.value }))}
                 className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm"
               >
                 <option value="above">Above the player</option>
@@ -265,8 +215,8 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
             <div>
               <label className="text-sm font-medium mb-1.5 block">Animation</label>
               <select
-                value={animation}
-                onChange={(e) => setAnimation(e.target.value)}
+                value={config.animation}
+                onChange={(e) => setConfig((c) => ({ ...c, animation: e.target.value }))}
                 className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm"
               >
                 <option value="none">None</option>
@@ -293,14 +243,14 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
               </div>
             </div>
             <button
-              onClick={() => setAbTestEnabled(!abTestEnabled)}
-              className={`relative w-11 h-6 rounded-full transition-colors ${abTestEnabled ? "bg-primary" : "bg-muted"}`}
+              onClick={() => setConfig((c) => ({ ...c, abTestEnabled: !c.abTestEnabled }))}
+              className={`relative w-11 h-6 rounded-full transition-colors ${config.abTestEnabled ? "bg-primary" : "bg-muted"}`}
             >
-              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${abTestEnabled ? "translate-x-5" : ""}`} />
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${config.abTestEnabled ? "translate-x-5" : ""}`} />
             </button>
           </div>
 
-          {abTestEnabled && (
+          {config.abTestEnabled && (
             <>
               <div className="flex items-center justify-between py-3 border-b border-border">
                 <div>
@@ -310,27 +260,30 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
                   </div>
                 </div>
                 <button
-                  onClick={() => setIncludeNoHeadline(!includeNoHeadline)}
-                  className={`relative w-11 h-6 rounded-full transition-colors ${includeNoHeadline ? "bg-primary" : "bg-muted"}`}
+                  onClick={() => setConfig((c) => ({ ...c, includeNoHeadlineVariant: !c.includeNoHeadlineVariant }))}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${config.includeNoHeadlineVariant ? "bg-primary" : "bg-muted"}`}
                 >
-                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${includeNoHeadline ? "translate-x-5" : ""}`} />
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${config.includeNoHeadlineVariant ? "translate-x-5" : ""}`} />
                 </button>
               </div>
 
               <div className="flex gap-3 mt-4">
                 {!abTestRunning ? (
-                  <Button onClick={handleStartTest}>
+                  <Button onClick={() => toggleAbTest(true)}>
                     <Play className="w-4 h-4 mr-2" /> Start Test
                   </Button>
                 ) : (
-                  <Button variant="destructive" onClick={handleStopTest}>
+                  <Button variant="destructive" onClick={() => toggleAbTest(false)}>
                     Stop Test
                   </Button>
                 )}
-                {abTestStatus === "completed" && (
+                {config.abTestStatus === "completed" && (
                   <Badge variant="success">Test Completed</Badge>
                 )}
               </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Remember to click &quot;Save Changes&quot; to apply.
+              </p>
             </>
           )}
         </CardContent>
@@ -339,7 +292,7 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
       {/* Variants */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">
-          Variants {variants.length > 0 && <span className="text-muted-foreground">({variants.length})</span>}
+          Variants {config.variants.length > 0 && <span className="text-muted-foreground">({config.variants.length})</span>}
         </h2>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => addVariant("text")}>
@@ -355,7 +308,7 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
       </div>
 
       {/* "No headline" variant card */}
-      {abTestEnabled && includeNoHeadline && (
+      {config.abTestEnabled && config.includeNoHeadlineVariant && (
         <Card className="mb-4 border-dashed">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -372,7 +325,7 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
       )}
 
       {/* Variant cards */}
-      {variants.map((variant, index) => (
+      {config.variants.map((variant, index) => (
         <Card key={variant.id} className="mb-4">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
@@ -387,7 +340,6 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm">
                     Variant {String.fromCharCode(65 + index)}
-                    {variant._isNew && <span className="text-primary ml-1">(new)</span>}
                   </span>
                   <Badge variant={variant.type === "text" ? "info" : "default"}>
                     {variant.type.toUpperCase()}
@@ -515,32 +467,22 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
                     <Monitor className="w-4 h-4" /> Desktop Image
                     <span className="text-xs text-muted-foreground font-normal">Recommended: 1500x200px</span>
                   </label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={variant.imageUrl || ""}
-                      onChange={(e) => updateVariant(variant.id, { imageUrl: e.target.value })}
-                      placeholder="https://... or upload"
-                    />
-                    <Button variant="outline" size="icon">
-                      <Upload className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  <Input
+                    value={variant.imageUrl || ""}
+                    onChange={(e) => updateVariant(variant.id, { imageUrl: e.target.value })}
+                    placeholder="https://..."
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-1.5 flex items-center gap-2">
                     <Smartphone className="w-4 h-4" /> Mobile Image (optional)
                     <span className="text-xs text-muted-foreground font-normal">Recommended: 410x110px</span>
                   </label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={variant.mobileImageUrl || ""}
-                      onChange={(e) => updateVariant(variant.id, { mobileImageUrl: e.target.value })}
-                      placeholder="Separate image for mobile (optional)"
-                    />
-                    <Button variant="outline" size="icon">
-                      <Upload className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  <Input
+                    value={variant.mobileImageUrl || ""}
+                    onChange={(e) => updateVariant(variant.id, { mobileImageUrl: e.target.value })}
+                    placeholder="Separate image for mobile (optional)"
+                  />
                 </div>
                 <div>
                   <label className="text-xs font-medium mb-1 block">Alt Text</label>
@@ -568,7 +510,7 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
             )}
 
             {/* A/B Test stats (when test is running) */}
-            {abTestEnabled && abTestRunning && (
+            {config.abTestEnabled && abTestRunning && (
               <div className="mt-4 pt-4 border-t border-border">
                 <div className="flex items-center gap-2 mb-3">
                   <BarChart3 className="w-4 h-4 text-muted-foreground" />
@@ -602,9 +544,9 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
                     </div>
                   </div>
                 </div>
-                {!variant.isWinner && !variant.isEliminated && variant.impressions >= 100 && (
+                {!variant.isWinner && !variant.isEliminated && (
                   <div className="mt-3 flex justify-end">
-                    <Button variant="outline" size="sm" onClick={() => handleDeclareWinner(variant.id)}>
+                    <Button variant="outline" size="sm" onClick={() => declareWinner(variant.id)}>
                       <Trophy className="w-3.5 h-3.5 mr-1" /> Declare Winner
                     </Button>
                   </div>
@@ -613,7 +555,7 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
             )}
 
             {/* Traffic weight (when A/B testing) */}
-            {abTestEnabled && variants.length > 1 && (
+            {config.abTestEnabled && config.variants.length > 1 && (
               <div className="mt-4 pt-4 border-t border-border">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-medium">Traffic Weight</label>
@@ -633,7 +575,7 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
         </Card>
       ))}
 
-      {variants.length === 0 && (
+      {config.variants.length === 0 && (
         <Card className="border-dashed">
           <div className="flex flex-col items-center gap-4 py-12">
             <Type className="w-12 h-12 text-muted-foreground" />
