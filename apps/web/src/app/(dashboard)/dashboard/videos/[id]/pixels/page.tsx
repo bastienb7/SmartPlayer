@@ -14,6 +14,7 @@ interface PixelItem {
   id: string;
   platform: Platform;
   pixelId: string;
+  fireDelay: number;
   events: Array<{ eventName: string; triggerTimestamp: number }>;
 }
 
@@ -80,6 +81,7 @@ export default function PixelsPage({ params }: { params: Promise<{ id: string }>
             id: p.id || `px-${i}`,
             platform: p.platform || "facebook",
             pixelId: p.pixelId || "",
+            fireDelay: p.fireDelay ?? 0,
             events: p.events || [],
           })));
         }
@@ -89,7 +91,7 @@ export default function PixelsPage({ params }: { params: Promise<{ id: string }>
   }, [id]);
 
   const addPixel = (platform: Platform) => {
-    setPixels([...pixels, { id: `px-${Date.now()}`, platform, pixelId: "", events: [] }]);
+    setPixels([...pixels, { id: `px-${Date.now()}`, platform, pixelId: "", fireDelay: 0, events: [] }]);
   };
 
   const updatePixel = (pixelId: string, updates: Partial<PixelItem>) => {
@@ -273,9 +275,49 @@ export default function PixelsPage({ params }: { params: Promise<{ id: string }>
                     </p>
                   </div>
 
+                  {/* Fire delay */}
+                  <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div>
+                        <label className="text-sm font-medium block">Fire Delay</label>
+                        <p className="text-xs text-muted-foreground">Wait before activating the pixel — filters out casual visitors and only tracks engaged viewers.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 mt-2">
+                      <select
+                        value={pixel.fireDelay === 0 ? "instant" : "delayed"}
+                        onChange={(e) => updatePixel(pixel.id, { fireDelay: e.target.value === "instant" ? 0 : 5 })}
+                        className="h-9 rounded-lg border border-border bg-background px-3 text-sm"
+                      >
+                        <option value="instant">Fire instantly</option>
+                        <option value="delayed">Delay before firing</option>
+                      </select>
+                      {pixel.fireDelay > 0 && (
+                        <div className="flex items-center gap-2 flex-1">
+                          <input
+                            type="range"
+                            min="1"
+                            max="60"
+                            value={pixel.fireDelay}
+                            onChange={(e) => updatePixel(pixel.id, { fireDelay: parseInt(e.target.value) })}
+                            className="flex-1"
+                          />
+                          <span className="text-sm font-medium w-10 text-right">{pixel.fireDelay}s</span>
+                        </div>
+                      )}
+                    </div>
+                    {pixel.fireDelay > 0 && (
+                      <p className="text-xs text-muted-foreground mt-2 bg-amber-500/10 text-amber-400 px-2 py-1 rounded">
+                        The pixel will only load after the viewer has been on the page for {pixel.fireDelay} seconds. Visitors who leave before {pixel.fireDelay}s won&apos;t be tracked or added to your audiences — keeping your data clean and your retargeting focused on qualified viewers.
+                      </p>
+                    )}
+                  </div>
+
                   {/* Auto events info */}
                   <div className="bg-muted/50 rounded-lg p-3 mb-4">
-                    <div className="text-xs font-medium mb-1.5 text-muted-foreground uppercase tracking-wide">Automatic events (always fired)</div>
+                    <div className="text-xs font-medium mb-1.5 text-muted-foreground uppercase tracking-wide">
+                      Automatic events {pixel.fireDelay > 0 ? `(fired after ${pixel.fireDelay}s delay)` : "(always fired)"}
+                    </div>
                     <div className="flex flex-wrap gap-1.5">
                       {info.autoEvents.map((evt) => (
                         <span key={evt} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
