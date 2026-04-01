@@ -115,7 +115,8 @@ export default function VideoDetailPage({ params }: { params: Promise<{ id: stri
       .finally(() => setLoading(false));
   }, [id]);
 
-  const embedCode = `<div id="smartplayer-${id}"></div>\n<script src="/sp/smartplayer.min.js" data-video="${id}" defer></script>`;
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const embedCode = `<div id="smartplayer-${id}" data-api="${baseUrl}"></div>\n<script src="${baseUrl}/sp/smartplayer.min.js" defer></script>`;
 
   const copyEmbed = () => {
     navigator.clipboard.writeText(embedCode);
