@@ -9,6 +9,7 @@ import { ctaRoutes } from "./routes/cta";
 import { headlineRoutes } from "./routes/headlines";
 import { embedRoutes } from "./routes/embed";
 import { exitIntentRoutes } from "./routes/exit-intent";
+import { funnelRoutes } from "./routes/funnels";
 import { env } from "./config/env";
 
 const app = new Hono();
@@ -35,6 +36,7 @@ app.route("/api/videos", videoRoutes);
 app.route("/api/cta", ctaRoutes);
 app.route("/api/headlines", headlineRoutes);
 app.route("/api/exit-intent", exitIntentRoutes);
+app.route("/api/funnels", funnelRoutes);
 
 // 404 handler
 app.notFound((c) => c.json({ error: "Not found" }, 404));

@@ -24,6 +24,7 @@ export interface PlayerConfig {
   socialProof?: SocialProofConfig;
   chapters?: SmartChaptersConfig;
   polls?: InteractivePollConfig;
+  funnel?: VideoFunnelConfig;
   // Assigned variants
   assignedHeadlineVariant?: string;
   assignedVideoVariant?: string;
@@ -128,6 +129,27 @@ export interface InteractivePollConfig {
   backgroundColor?: string;
   textColor?: string;
   optionColor?: string;
+}
+
+export interface FunnelStepVariant {
+  id: string;
+  hlsUrl: string;
+  duration: number;
+  weight?: number;
+}
+export interface FunnelStep {
+  id: string;
+  category: "hook" | "body" | "cta" | "bonus" | "custom";
+  assignedVariant: FunnelStepVariant;
+  variants: FunnelStepVariant[];
+  abTestId?: string;
+}
+export interface VideoFunnelConfig {
+  enabled: boolean;
+  funnelId: string;
+  steps: FunnelStep[];
+  combinedProgress: boolean;
+  preloadSeconds: number;
 }
 
 export interface AutoplayVariant {

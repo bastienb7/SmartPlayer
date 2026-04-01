@@ -12,6 +12,7 @@ import { MiniHook } from "../features/MiniHook";
 import { TurboSpeed } from "../features/TurboSpeed";
 import { PixelTracking } from "../features/PixelTracking";
 import { PageSync } from "../features/PageSync";
+import { VideoFunnel } from "../features/VideoFunnel";
 import { PictureInPicture } from "../features/PictureInPicture";
 import { ExitIntent } from "../features/ExitIntent";
 import { CountdownTimer } from "../features/CountdownTimer";
@@ -222,8 +223,20 @@ export class Player {
       this.state.update({ error: err })
     );
 
-    // Load video
-    this.engine.load(this.config.hlsUrl, this.config.posterUrl);
+    // Video Funnel OR single video load
+    if (this.config.funnel?.enabled && this.config.funnel.steps.length > 0) {
+      // Funnel mode: funnel controls video loading + transitions
+      const funnel = new VideoFunnel(this.engine, this.bus, this.config.funnel);
+      funnel.init();
+      this.features.push(funnel);
+
+      // Load the first step's video
+      const firstStep = this.config.funnel.steps[0];
+      this.engine.load(firstStep.assignedVariant.hlsUrl, this.config.posterUrl);
+    } else {
+      // Single video mode
+      this.engine.load(this.config.hlsUrl, this.config.posterUrl);
+    }
 
     // Smart Autoplay (must be last — it triggers play)
     this.bus.once("engine:ready", () => {

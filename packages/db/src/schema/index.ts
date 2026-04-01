@@ -7,3 +7,4 @@ export * from "./ab-tests";
 export * from "./pixels";
 export * from "./headlines";
 export * from "./exit-intent";
+export * from "./funnels";
