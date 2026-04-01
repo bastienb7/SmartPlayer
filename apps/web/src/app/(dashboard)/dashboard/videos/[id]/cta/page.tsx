@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Plus, Trash2, GripVertical, MousePointer, Loader2, AlertCircle, Save, Check } from "lucide-react";
 import { api } from "@/lib/api-client";
 
+type CTAPosition = "inside-bottom" | "inside-center" | "below";
+
 interface CTAItem {
   id: string;
   timestamp: number;
@@ -16,6 +18,7 @@ interface CTAItem {
   buttonColor: string;
   buttonTextColor: string;
   openInNewTab: boolean;
+  position: CTAPosition;
 }
 
 export default function CTAEditorPage({ params }: { params: Promise<{ id: string }> }) {
@@ -40,6 +43,7 @@ export default function CTAEditorPage({ params }: { params: Promise<{ id: string
             buttonColor: c.buttonColor || "#6366f1",
             buttonTextColor: c.buttonTextColor || "#ffffff",
             openInNewTab: c.openInNewTab ?? true,
+            position: c.position || "inside-bottom",
           })));
         }
       })
@@ -57,6 +61,7 @@ export default function CTAEditorPage({ params }: { params: Promise<{ id: string
       buttonColor: "#6366f1",
       buttonTextColor: "#ffffff",
       openInNewTab: true,
+      position: "inside-bottom",
     }]);
   };
 
@@ -140,23 +145,51 @@ export default function CTAEditorPage({ params }: { params: Promise<{ id: string
                     </Button>
                   </div>
                   {/* Live Preview */}
-                  <div className="bg-muted rounded-lg p-6 mb-4 flex flex-col items-center gap-2">
-                    <div className="text-xs text-muted-foreground mb-1">Preview</div>
-                    <div className="relative w-full max-w-md aspect-video bg-black rounded-lg flex items-end justify-center pb-6">
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-lg" />
-                      <button
-                        className="relative z-10 px-8 py-3 rounded-lg font-semibold text-sm shadow-lg transition-transform hover:scale-105"
-                        style={{
-                          backgroundColor: cta.buttonColor,
-                          color: cta.buttonTextColor,
-                        }}
-                      >
-                        {cta.text || "Click Here"}
-                      </button>
+                  <div className="bg-muted rounded-lg p-4 mb-4">
+                    <div className="text-xs text-muted-foreground mb-2">Preview — {cta.position === "below" ? "Below the video" : cta.position === "inside-center" ? "Centered in video" : "Bottom of video (overlay)"}</div>
+                    <div className="w-full max-w-lg mx-auto">
+                      {/* Video area */}
+                      <div className={`relative w-full aspect-video bg-black rounded-t-lg ${cta.position === "below" ? "rounded-b-lg" : ""} overflow-hidden`}>
+                        {/* Fake video content */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+                            <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[14px] border-l-white/40 border-b-[8px] border-b-transparent ml-1" />
+                          </div>
+                        </div>
+                        {/* Fake progress bar */}
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                          <div className="h-full bg-primary/60" style={{ width: `${Math.min(100, (cta.timestamp / 60) * 100)}%` }} />
+                        </div>
+
+                        {/* CTA inside video */}
+                        {cta.position !== "below" && (
+                          <div className={`absolute left-0 right-0 flex justify-center ${cta.position === "inside-center" ? "inset-0 items-center" : "bottom-4 items-end"}`}>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+                            <button
+                              className="relative z-10 px-8 py-3 rounded-lg font-semibold text-sm shadow-lg"
+                              style={{ backgroundColor: cta.buttonColor, color: cta.buttonTextColor }}
+                            >
+                              {cta.text || "Click Here"}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* CTA below video */}
+                      {cta.position === "below" && (
+                        <div className="flex justify-center py-4 bg-muted/50 rounded-b-lg border-t border-border">
+                          <button
+                            className="px-8 py-3 rounded-lg font-semibold text-sm shadow-lg"
+                            style={{ backgroundColor: cta.buttonColor, color: cta.buttonTextColor }}
+                          >
+                            {cta.text || "Click Here"}
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Appears at {cta.timestamp}s for {cta.duration}s
-                      {cta.url && cta.url !== "https://" && <span> &rarr; {cta.url}</span>}
+                    <div className="text-xs text-muted-foreground mt-2 text-center">
+                      Appears at <span className="font-medium text-foreground">{cta.timestamp}s</span> for <span className="font-medium text-foreground">{cta.duration}s</span>
+                      {cta.url && cta.url !== "https://" && <span> &rarr; <span className="text-primary">{cta.url}</span></span>}
                     </div>
                   </div>
 
@@ -190,6 +223,18 @@ export default function CTAEditorPage({ params }: { params: Promise<{ id: string
                         <input type="color" value={cta.buttonTextColor} onChange={(e) => updateCTA(cta.id, "buttonTextColor", e.target.value)} className="w-10 h-10 rounded border border-border cursor-pointer" />
                         <Input value={cta.buttonTextColor} onChange={(e) => updateCTA(cta.id, "buttonTextColor", e.target.value)} />
                       </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1.5 block">Position</label>
+                      <select
+                        value={cta.position}
+                        onChange={(e) => updateCTA(cta.id, "position", e.target.value)}
+                        className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm"
+                      >
+                        <option value="inside-bottom">Inside video — bottom</option>
+                        <option value="inside-center">Inside video — center</option>
+                        <option value="below">Below the video</option>
+                      </select>
                     </div>
                     <div className="flex items-end">
                       <label className="flex items-center gap-2 text-sm">
