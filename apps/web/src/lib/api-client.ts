@@ -118,6 +118,30 @@ export const api = {
   getAnalyticsVariants: (videoId: string) =>
     request<{ variants: any[] }>(`/analytics/variants?videoId=${videoId}`),
 
+  // Funnels
+  getFunnels: () => request<{ funnels: any[] }>("/api/funnels"),
+  getFunnel: (id: string) => request<{ funnel: any; steps: any[] }>(`/api/funnels/${id}`),
+  createFunnel: (data: { name: string; description?: string }) =>
+    request<{ funnel: any }>("/api/funnels", { method: "POST", body: JSON.stringify(data) }),
+  updateFunnel: (id: string, data: any) =>
+    request<any>(`/api/funnels/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteFunnel: (id: string) =>
+    request<any>(`/api/funnels/${id}`, { method: "DELETE" }),
+  addFunnelStep: (funnelId: string, data: { name: string; category: string; sort_order: number }) =>
+    request<{ step: any }>(`/api/funnels/${funnelId}/steps`, { method: "POST", body: JSON.stringify(data) }),
+  updateFunnelStep: (stepId: string, data: any) =>
+    request<any>(`/api/funnels/steps/${stepId}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteFunnelStep: (stepId: string) =>
+    request<any>(`/api/funnels/steps/${stepId}`, { method: "DELETE" }),
+  addStepVariant: (stepId: string, data: { video_id: string; name: string; weight: number }) =>
+    request<{ variant: any }>(`/api/funnels/steps/${stepId}/variants`, { method: "POST", body: JSON.stringify(data) }),
+  updateStepVariant: (variantId: string, data: any) =>
+    request<any>(`/api/funnels/variants/${variantId}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteStepVariant: (variantId: string) =>
+    request<any>(`/api/funnels/variants/${variantId}`, { method: "DELETE" }),
+  getFunnelEmbed: (id: string) =>
+    request<{ html: string }>(`/api/funnels/${id}/embed`),
+
   // Embed
   getEmbedCode: (videoId: string) => request<any>(`/embed/${videoId}/code`),
 };
