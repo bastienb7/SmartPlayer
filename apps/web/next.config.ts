@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
       { source: "/analytics/:path*", destination: `${API_URL}/analytics/:path*` },
       { source: "/embed/:path*", destination: `${API_URL}/embed/:path*` },
       { source: "/player/:path*", destination: `${API_URL}/player/:path*` },
+      { source: "/auth/:path*", destination: `${API_URL}/auth/:path*` },
     ];
   },
 };

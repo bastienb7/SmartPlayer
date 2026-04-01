@@ -14,8 +14,11 @@ import {
   ChevronLeft,
   Search,
   Bell,
+  LogOut,
+  User,
 } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/lib/auth";
 
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -29,6 +32,7 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const { user, logout } = useAuth();
 
   return (
     <aside
@@ -84,8 +88,26 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Collapse button */}
-      <div className="p-3 border-t border-sidebar-border">
+      {/* User + Logout */}
+      <div className="p-3 border-t border-sidebar-border space-y-1">
+        {user && !collapsed && (
+          <div className="flex items-center gap-2 px-3 py-2 text-sm">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0">
+              {user.name?.charAt(0).toUpperCase() || "U"}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-medium truncate">{user.name}</div>
+              <div className="text-[10px] text-muted-foreground truncate">{user.email}</div>
+            </div>
+          </div>
+        )}
+        <button
+          onClick={logout}
+          className="flex items-center gap-2 px-3 py-2 w-full text-sm text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-destructive/5"
+        >
+          <LogOut className="w-4 h-4 flex-shrink-0" />
+          {!collapsed && <span>Sign Out</span>}
+        </button>
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="flex items-center gap-2 px-3 py-2 w-full text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-white/[0.03]"
@@ -100,6 +122,16 @@ export function Sidebar() {
         </button>
       </div>
     </aside>
+  );
+}
+
+function UserAvatar() {
+  const { user } = useAuth();
+  const initials = user?.name ? user.name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2) : "SP";
+  return (
+    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-xs font-bold text-white">
+      {initials}
+    </div>
   );
 }
 
@@ -129,9 +161,7 @@ export function TopBar({ title, subtitle }: { title: string; subtitle?: string }
           <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-primary rounded-full" />
         </button>
         {/* Avatar */}
-        <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-xs font-bold text-white">
-          SP
-        </div>
+        <UserAvatar />
       </div>
     </div>
   );

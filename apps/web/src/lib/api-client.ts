@@ -1,13 +1,19 @@
 // Use relative URL so Next.js rewrites (local) or nginx (VPS) handle routing
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
+function getToken(): string {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("sp_token") || "dev-token";
+  }
+  return "dev-token";
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      // In production, add Clerk token here
-      Authorization: "Bearer dev-token",
+      Authorization: `Bearer ${getToken()}`,
       ...options?.headers,
     },
   });
