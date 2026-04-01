@@ -25,6 +25,7 @@ export interface PlayerConfig {
   chapters?: SmartChaptersConfig;
   polls?: InteractivePollConfig;
   funnel?: VideoFunnelConfig;
+  smartABR?: SmartABRConfig;
   // Assigned variants
   assignedHeadlineVariant?: string;
   assignedVideoVariant?: string;
@@ -150,6 +151,14 @@ export interface VideoFunnelConfig {
   steps: FunnelStep[];
   combinedProgress: boolean;
   preloadSeconds: number;
+}
+
+export interface SmartABRConfig {
+  enabled: boolean;
+  preferStability: boolean;
+  allowQualityLock: boolean;
+  upgradeBufferThreshold: number;
+  maxConsecutiveDowngrades: number;
 }
 
 export interface AutoplayVariant {

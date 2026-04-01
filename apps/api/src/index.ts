@@ -10,6 +10,9 @@ import { headlineRoutes } from "./routes/headlines";
 import { embedRoutes } from "./routes/embed";
 import { exitIntentRoutes } from "./routes/exit-intent";
 import { funnelRoutes } from "./routes/funnels";
+import { conversionRoutes } from "./routes/conversions";
+import { analyticsAdvancedRoutes } from "./routes/analytics-advanced";
+import { publicApiRoutes } from "./routes/public-api";
 import { env } from "./config/env";
 
 const app = new Hono();
@@ -37,6 +40,11 @@ app.route("/api/cta", ctaRoutes);
 app.route("/api/headlines", headlineRoutes);
 app.route("/api/exit-intent", exitIntentRoutes);
 app.route("/api/funnels", funnelRoutes);
+app.route("/api/conversions", conversionRoutes);
+app.route("/analytics/advanced", analyticsAdvancedRoutes);
+
+// Public API v1 (API key auth)
+app.route("/v1", publicApiRoutes);
 
 // 404 handler
 app.notFound((c) => c.json({ error: "Not found" }, 404));

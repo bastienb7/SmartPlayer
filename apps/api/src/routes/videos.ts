@@ -4,7 +4,7 @@ import { z } from "zod";
 import { db, videos, players } from "@smartplayer/db";
 import { eq, and, desc } from "drizzle-orm";
 import { authMiddleware, getOrgId } from "../middleware/auth";
-import { getUploadUrl } from "../lib/s3";
+import { getUploadUrl, getPublicUrl } from "../lib/s3";
 import { cacheDel } from "../lib/redis";
 import { enqueueTranscode } from "../lib/queue";
 
@@ -155,6 +155,41 @@ app.patch("/:id/player", async (c) => {
   await cacheDel(`player:config:${videoId}`);
 
   return c.json(player);
+});
+
+// Custom thumbnail upload
+app.post("/:id/thumbnail", async (c) => {
+  const orgId = getOrgId(c);
+  const id = c.req.param("id")!;
+
+  const video = await db.query.videos.findFirst({
+    where: and(eq(videos.id, id), eq(videos.orgId, orgId)),
+  });
+  if (!video) return c.json({ error: "Not found" }, 404);
+
+  const contentType = c.req.query("contentType") || "image/jpeg";
+  const key = `${orgId}/${id}/custom-poster.${contentType.includes("png") ? "png" : "jpg"}`;
+  const uploadUrl = await getUploadUrl(key, contentType);
+  const posterUrl = getPublicUrl(key);
+
+  return c.json({ uploadUrl, posterUrl, key });
+});
+
+// Confirm custom thumbnail uploaded → update video record
+app.post("/:id/thumbnail/confirm", async (c) => {
+  const orgId = getOrgId(c);
+  const id = c.req.param("id")!;
+  const { posterUrl } = await c.req.json();
+
+  const [video] = await db.update(videos)
+    .set({ posterUrl, updatedAt: new Date() })
+    .where(and(eq(videos.id, id), eq(videos.orgId, orgId)))
+    .returning();
+
+  if (!video) return c.json({ error: "Not found" }, 404);
+  await cacheDel(`player:config:${id}`);
+
+  return c.json(video);
 });
 
 export { app as videoRoutes };

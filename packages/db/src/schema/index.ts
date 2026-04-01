@@ -8,3 +8,4 @@ export * from "./pixels";
 export * from "./headlines";
 export * from "./exit-intent";
 export * from "./funnels";
+export * from "./conversions";

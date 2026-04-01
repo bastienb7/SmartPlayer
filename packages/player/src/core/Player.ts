@@ -16,6 +16,7 @@ import { VideoFunnel } from "../features/VideoFunnel";
 import { PictureInPicture } from "../features/PictureInPicture";
 import { ExitIntent } from "../features/ExitIntent";
 import { CountdownTimer } from "../features/CountdownTimer";
+import { SmartABR } from "../features/SmartABR";
 import { SocialProof } from "../features/SocialProof";
 import { SmartChapters } from "../features/SmartChapters";
 import { InteractivePoll } from "../features/InteractivePoll";
@@ -236,6 +237,13 @@ export class Player {
     } else {
       // Single video mode
       this.engine.load(this.config.hlsUrl, this.config.posterUrl);
+    }
+
+    // Smart ABR (after video load, before autoplay)
+    if (this.config.smartABR) {
+      const abr = new SmartABR(this.engine, this.bus, this.config.smartABR);
+      abr.init();
+      this.features.push(abr);
     }
 
     // Smart Autoplay (must be last — it triggers play)

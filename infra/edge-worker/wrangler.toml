@@ -1,0 +1,11 @@
+name = "smartplayer-edge"
+main = "worker.ts"
+compatibility_date = "2024-01-01"
+
+[vars]
+ORIGIN_API_URL = "https://api.smartplayer.io"
+
+[[kv_namespaces]]
+binding = "PLAYER_CONFIG"
+id = "YOUR_KV_NAMESPACE_ID"
+# Create with: wrangler kv:namespace create "PLAYER_CONFIG"
