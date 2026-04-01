@@ -28,28 +28,37 @@ const featureLinks = [
   { href: "page-sync", icon: Gauge, label: "Page Sync" },
 ];
 
-function VideoPlayer({ hlsUrl, posterUrl }: { hlsUrl?: string; posterUrl?: string }) {
+function VideoPlayer({ src, posterUrl }: { src?: string; posterUrl?: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !hlsUrl) return;
+    if (!video || !src) return;
 
-    if (Hls.isSupported()) {
+    // Check if it's an HLS stream (.m3u8) or direct video file (.mp4, etc.)
+    const isHLS = src.includes(".m3u8");
+
+    if (isHLS && Hls.isSupported()) {
       const hls = new Hls({ startLevel: -1 });
       hlsRef.current = hls;
-      hls.loadSource(hlsUrl);
+      hls.loadSource(src);
       hls.attachMedia(video);
-    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      video.src = hlsUrl;
+    } else if (isHLS && video.canPlayType("application/vnd.apple.mpegurl")) {
+      // Native HLS (Safari/iOS)
+      video.src = src;
+    } else {
+      // Direct MP4 or other format — use native <video>
+      video.src = src;
     }
 
     return () => {
-      hlsRef.current?.destroy();
-      hlsRef.current = null;
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
     };
-  }, [hlsUrl]);
+  }, [src]);
 
   return (
     <video
@@ -76,7 +85,17 @@ export default function VideoDetailPage({ params }: { params: Promise<{ id: stri
       api.getAnalyticsOverview({ videoId: id }).catch(() => null),
     ])
       .then(([videoData, analyticsData]) => {
-        setVideo(videoData.video || videoData);
+        const v = videoData.video || videoData;
+        // Normalize snake_case → camelCase for compatibility
+        setVideo({
+          ...v,
+          hlsUrl: v.hlsUrl || v.hls_url,
+          posterUrl: v.posterUrl || v.poster_url,
+          sourceKey: v.sourceKey || v.source_key,
+          sizeBytes: v.sizeBytes || v.size_bytes,
+          createdAt: v.createdAt || v.created_at,
+          updatedAt: v.updatedAt || v.updated_at,
+        });
         if (analyticsData) {
           setStats({
             plays: analyticsData.totalPlays ?? 0,
@@ -164,7 +183,7 @@ export default function VideoDetailPage({ params }: { params: Promise<{ id: stri
           <CardContent>
             <div className="aspect-video bg-black rounded-lg overflow-hidden">
               {video.status === "ready" && video.hlsUrl ? (
-                <VideoPlayer hlsUrl={video.hlsUrl} posterUrl={video.posterUrl} />
+                <VideoPlayer src={video.hlsUrl} posterUrl={video.posterUrl} />
               ) : video.posterUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={video.posterUrl} alt={video.title} className="w-full h-full object-cover" />

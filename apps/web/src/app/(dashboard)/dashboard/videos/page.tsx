@@ -33,7 +33,11 @@ export default function VideosPage() {
 
   useEffect(() => {
     api.getVideos()
-      .then((data) => setVideos(data.videos || []))
+      .then((data) => setVideos((data.videos || []).map((v: any) => ({
+        ...v,
+        createdAt: v.createdAt || v.created_at,
+        thumbnailUrl: v.thumbnailUrl || v.poster_url || v.posterUrl,
+      }))))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
