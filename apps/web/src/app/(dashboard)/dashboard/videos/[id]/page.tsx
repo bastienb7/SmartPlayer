@@ -2,7 +2,6 @@
 
 import { use, useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import Hls from "hls.js";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,25 +29,31 @@ const featureLinks = [
 
 function VideoPlayer({ src, posterUrl }: { src?: string; posterUrl?: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<Hls | null>(null);
+  const hlsRef = useRef<any>(null);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !src) return;
 
-    // Check if it's an HLS stream (.m3u8) or direct video file (.mp4, etc.)
     const isHLS = src.includes(".m3u8");
 
-    if (isHLS && Hls.isSupported()) {
-      const hls = new Hls({ startLevel: -1 });
-      hlsRef.current = hls;
-      hls.loadSource(src);
-      hls.attachMedia(video);
-    } else if (isHLS && video.canPlayType("application/vnd.apple.mpegurl")) {
-      // Native HLS (Safari/iOS)
-      video.src = src;
+    if (isHLS) {
+      // Dynamic import to avoid SSR issues
+      import("hls.js").then(({ default: Hls }) => {
+        if (Hls.isSupported()) {
+          const hls = new Hls({ startLevel: -1 });
+          hlsRef.current = hls;
+          hls.loadSource(src);
+          hls.attachMedia(video);
+        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+          video.src = src;
+        }
+      }).catch(() => {
+        // Fallback: try native
+        video.src = src;
+      });
     } else {
-      // Direct MP4 or other format — use native <video>
+      // Direct MP4 or other format
       video.src = src;
     }
 
