@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useState, useRef } from "react";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Plus, Trash2, GripVertical, MousePointer, Loader2, AlertCircle, Save, C
 import { api } from "@/lib/api-client";
 
 type CTAPosition = "inside-bottom" | "inside-center" | "below";
+type CTAShape = "rounded" | "pill" | "square";
 
 interface CTAItem {
   id: string;
@@ -19,53 +20,83 @@ interface CTAItem {
   buttonTextColor: string;
   openInNewTab: boolean;
   position: CTAPosition;
+  paddingBottom: number;
+  fontSize: number;
+  fontFamily: string;
+  shape: CTAShape;
+  paddingX: number;
+  paddingY: number;
 }
+
+const defaultCTA: Omit<CTAItem, "id"> = {
+  timestamp: 0,
+  duration: 10,
+  text: "Click Here",
+  url: "https://",
+  buttonColor: "#6366f1",
+  buttonTextColor: "#ffffff",
+  openInNewTab: true,
+  position: "inside-bottom",
+  paddingBottom: 16,
+  fontSize: 16,
+  fontFamily: "sans-serif",
+  shape: "rounded",
+  paddingX: 32,
+  paddingY: 12,
+};
+
+const shapeClass: Record<CTAShape, string> = {
+  rounded: "rounded-lg",
+  pill: "rounded-full",
+  square: "rounded-none",
+};
+
+const fontOptions = [
+  { value: "sans-serif", label: "Sans-serif" },
+  { value: "serif", label: "Serif" },
+  { value: "monospace", label: "Monospace" },
+  { value: "'Inter', sans-serif", label: "Inter" },
+  { value: "'Georgia', serif", label: "Georgia" },
+];
 
 export default function CTAEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [ctas, setCTAs] = useState<CTAItem[]>([]);
+  const [videoUrl, setVideoUrl] = useState<string>("");
+  const [posterUrl, setPosterUrl] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    api.getPlayerConfig(id)
-      .then((player) => {
-        const ctaConfig = player.ctaConfig;
-        if (Array.isArray(ctaConfig) && ctaConfig.length > 0) {
-          setCTAs(ctaConfig.map((c: any, i: number) => ({
-            id: c.id || `cta-${i}`,
-            timestamp: c.timestamp ?? 0,
-            duration: c.duration ?? 10,
-            text: c.text || "Click Here",
-            url: c.url || "https://",
-            buttonColor: c.buttonColor || "#6366f1",
-            buttonTextColor: c.buttonTextColor || "#ffffff",
-            openInNewTab: c.openInNewTab ?? true,
-            position: c.position || "inside-bottom",
-          })));
-        }
-      })
+    Promise.all([
+      api.getPlayerConfig(id),
+      api.getVideo(id).catch(() => null),
+    ]).then(([player, videoData]) => {
+      const ctaConfig = player.ctaConfig;
+      if (Array.isArray(ctaConfig) && ctaConfig.length > 0) {
+        setCTAs(ctaConfig.map((c: any, i: number) => ({
+          ...defaultCTA,
+          ...c,
+          id: c.id || `cta-${i}`,
+        })));
+      }
+      const v = videoData?.video || videoData;
+      if (v) {
+        setVideoUrl(v.hlsUrl || v.hls_url || "");
+        setPosterUrl(v.posterUrl || v.poster_url || "");
+      }
+    })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [id]);
 
   const addCTA = () => {
-    setCTAs([...ctas, {
-      id: `cta-${Date.now()}`,
-      timestamp: 0,
-      duration: 10,
-      text: "Click Here",
-      url: "https://",
-      buttonColor: "#6366f1",
-      buttonTextColor: "#ffffff",
-      openInNewTab: true,
-      position: "inside-bottom",
-    }]);
+    setCTAs([...ctas, { ...defaultCTA, id: `cta-${Date.now()}` }]);
   };
 
-  const updateCTA = (ctaId: string, key: keyof CTAItem, value: any) => {
+  const updateCTA = (ctaId: string, key: string, value: any) => {
     setCTAs(ctas.map((c) => (c.id === ctaId ? { ...c, [key]: value } : c)));
   };
 
@@ -96,7 +127,7 @@ export default function CTAEditorPage({ params }: { params: Promise<{ id: string
   }
 
   return (
-    <div className="max-w-3xl">
+    <div className="max-w-4xl">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold">CTA Buttons</h1>
@@ -130,121 +161,207 @@ export default function CTAEditorPage({ params }: { params: Promise<{ id: string
           </div>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {ctas.map((cta, index) => (
-            <Card key={cta.id} className="relative">
-              <div className="flex items-start gap-4">
-                <div className="pt-1 text-muted-foreground cursor-grab">
-                  <GripVertical className="w-5 h-5" />
+            <Card key={cta.id}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab" />
+                  <span className="text-sm font-semibold">CTA #{index + 1}</span>
                 </div>
-                <CardContent className="flex-1 p-0">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-sm font-medium text-muted-foreground">CTA #{index + 1}</span>
-                    <Button variant="ghost" size="icon" onClick={() => deleteCTA(cta.id)}>
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </div>
-                  {/* Live Preview */}
-                  <div className="bg-muted rounded-lg p-4 mb-4">
-                    <div className="text-xs text-muted-foreground mb-2">Preview — {cta.position === "below" ? "Below the video" : cta.position === "inside-center" ? "Centered in video" : "Bottom of video (overlay)"}</div>
-                    <div className="w-full max-w-lg mx-auto">
-                      {/* Video area */}
-                      <div className={`relative w-full aspect-video bg-black rounded-t-lg ${cta.position === "below" ? "rounded-b-lg" : ""} overflow-hidden`}>
-                        {/* Fake video content */}
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
-                            <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[14px] border-l-white/40 border-b-[8px] border-b-transparent ml-1" />
-                          </div>
-                        </div>
-                        {/* Fake progress bar */}
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
-                          <div className="h-full bg-primary/60" style={{ width: `${Math.min(100, (cta.timestamp / 60) * 100)}%` }} />
-                        </div>
-
-                        {/* CTA inside video */}
-                        {cta.position !== "below" && (
-                          <div className={`absolute left-0 right-0 flex justify-center ${cta.position === "inside-center" ? "inset-0 items-center" : "bottom-4 items-end"}`}>
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
-                            <button
-                              className="relative z-10 px-8 py-3 rounded-lg font-semibold text-sm shadow-lg"
-                              style={{ backgroundColor: cta.buttonColor, color: cta.buttonTextColor }}
-                            >
-                              {cta.text || "Click Here"}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* CTA below video */}
-                      {cta.position === "below" && (
-                        <div className="flex justify-center py-4 bg-muted/50 rounded-b-lg border-t border-border">
-                          <button
-                            className="px-8 py-3 rounded-lg font-semibold text-sm shadow-lg"
-                            style={{ backgroundColor: cta.buttonColor, color: cta.buttonTextColor }}
-                          >
-                            {cta.text || "Click Here"}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-2 text-center">
-                      Appears at <span className="font-medium text-foreground">{cta.timestamp}s</span> for <span className="font-medium text-foreground">{cta.duration}s</span>
-                      {cta.url && cta.url !== "https://" && <span> &rarr; <span className="text-primary">{cta.url}</span></span>}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium mb-1.5 block">Button Text</label>
-                      <Input value={cta.text} onChange={(e) => updateCTA(cta.id, "text", e.target.value)} />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-1.5 block">URL</label>
-                      <Input value={cta.url} onChange={(e) => updateCTA(cta.id, "url", e.target.value)} />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-1.5 block">Show at (seconds)</label>
-                      <Input type="number" value={cta.timestamp} onChange={(e) => updateCTA(cta.id, "timestamp", parseFloat(e.target.value) || 0)} />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-1.5 block">Duration (seconds)</label>
-                      <Input type="number" value={cta.duration} onChange={(e) => updateCTA(cta.id, "duration", parseInt(e.target.value) || 10)} />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-1.5 block">Button Color</label>
-                      <div className="flex gap-2">
-                        <input type="color" value={cta.buttonColor} onChange={(e) => updateCTA(cta.id, "buttonColor", e.target.value)} className="w-10 h-10 rounded border border-border cursor-pointer" />
-                        <Input value={cta.buttonColor} onChange={(e) => updateCTA(cta.id, "buttonColor", e.target.value)} />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-1.5 block">Text Color</label>
-                      <div className="flex gap-2">
-                        <input type="color" value={cta.buttonTextColor} onChange={(e) => updateCTA(cta.id, "buttonTextColor", e.target.value)} className="w-10 h-10 rounded border border-border cursor-pointer" />
-                        <Input value={cta.buttonTextColor} onChange={(e) => updateCTA(cta.id, "buttonTextColor", e.target.value)} />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-1.5 block">Position</label>
-                      <select
-                        value={cta.position}
-                        onChange={(e) => updateCTA(cta.id, "position", e.target.value)}
-                        className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm"
-                      >
-                        <option value="inside-bottom">Inside video — bottom</option>
-                        <option value="inside-center">Inside video — center</option>
-                        <option value="below">Below the video</option>
-                      </select>
-                    </div>
-                    <div className="flex items-end">
-                      <label className="flex items-center gap-2 text-sm">
-                        <input type="checkbox" checked={cta.openInNewTab} onChange={(e) => updateCTA(cta.id, "openInNewTab", e.target.checked)} className="rounded" />
-                        Open in new tab
-                      </label>
-                    </div>
-                  </div>
-                </CardContent>
+                <Button variant="ghost" size="icon" onClick={() => deleteCTA(cta.id)}>
+                  <Trash2 className="w-4 h-4 text-destructive" />
+                </Button>
               </div>
+
+              {/* Live Preview with real video */}
+              <div className="mb-6">
+                <div className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
+                  Live Preview — {cta.position === "below" ? "Below video" : cta.position === "inside-center" ? "Center overlay" : "Bottom overlay"}
+                </div>
+                <div className="rounded-xl overflow-hidden border border-border">
+                  {/* Video with CTA overlay */}
+                  <div className="relative w-full aspect-video bg-black">
+                    {/* Real video poster or video element as background */}
+                    {posterUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={posterUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-gray-800" />
+                    )}
+
+                    {/* Play button overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                        <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white/50 border-b-[10px] border-b-transparent ml-1.5" />
+                      </div>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                      <div className="h-full bg-primary" style={{ width: `${Math.min(100, (cta.timestamp / 60) * 100)}%` }} />
+                    </div>
+
+                    {/* CTA inside video */}
+                    {cta.position !== "below" && (
+                      <div
+                        className={`absolute left-0 right-0 flex justify-center ${cta.position === "inside-center" ? "inset-0 items-center" : "items-end"}`}
+                        style={cta.position === "inside-bottom" ? { bottom: `${cta.paddingBottom}px` } : undefined}
+                      >
+                        <button
+                          className={`${shapeClass[cta.shape]} font-semibold shadow-xl transition-transform hover:scale-105`}
+                          style={{
+                            backgroundColor: cta.buttonColor,
+                            color: cta.buttonTextColor,
+                            fontSize: `${cta.fontSize}px`,
+                            fontFamily: cta.fontFamily,
+                            paddingLeft: `${cta.paddingX}px`,
+                            paddingRight: `${cta.paddingX}px`,
+                            paddingTop: `${cta.paddingY}px`,
+                            paddingBottom: `${cta.paddingY}px`,
+                          }}
+                        >
+                          {cta.text || "Click Here"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* CTA below video */}
+                  {cta.position === "below" && (
+                    <div className="flex justify-center bg-muted/30 border-t border-border" style={{ padding: `${cta.paddingBottom}px 0` }}>
+                      <button
+                        className={`${shapeClass[cta.shape]} font-semibold shadow-lg`}
+                        style={{
+                          backgroundColor: cta.buttonColor,
+                          color: cta.buttonTextColor,
+                          fontSize: `${cta.fontSize}px`,
+                          fontFamily: cta.fontFamily,
+                          paddingLeft: `${cta.paddingX}px`,
+                          paddingRight: `${cta.paddingX}px`,
+                          paddingTop: `${cta.paddingY}px`,
+                          paddingBottom: `${cta.paddingY}px`,
+                        }}
+                      >
+                        {cta.text || "Click Here"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground mt-2 text-center">
+                  Appears at <span className="font-medium text-foreground">{cta.timestamp}s</span> for <span className="font-medium text-foreground">{cta.duration}s</span>
+                </div>
+              </div>
+
+              {/* Settings */}
+              <CardContent className="p-0">
+                {/* Row 1: Text & URL */}
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">Button Text</label>
+                    <Input value={cta.text} onChange={(e) => updateCTA(cta.id, "text", e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">URL</label>
+                    <Input value={cta.url} onChange={(e) => updateCTA(cta.id, "url", e.target.value)} />
+                  </div>
+                </div>
+
+                {/* Row 2: Timing */}
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">Show at (seconds)</label>
+                    <Input type="number" value={cta.timestamp} onChange={(e) => updateCTA(cta.id, "timestamp", parseFloat(e.target.value) || 0)} />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">Duration (seconds)</label>
+                    <Input type="number" value={cta.duration} onChange={(e) => updateCTA(cta.id, "duration", parseInt(e.target.value) || 10)} />
+                  </div>
+                </div>
+
+                {/* Row 3: Position & Shape */}
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">Position</label>
+                    <select value={cta.position} onChange={(e) => updateCTA(cta.id, "position", e.target.value)} className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm">
+                      <option value="inside-bottom">In video — bottom</option>
+                      <option value="inside-center">In video — center</option>
+                      <option value="below">Below video</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">Shape</label>
+                    <select value={cta.shape} onChange={(e) => updateCTA(cta.id, "shape", e.target.value)} className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm">
+                      <option value="rounded">Rounded</option>
+                      <option value="pill">Pill</option>
+                      <option value="square">Square</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">
+                      {cta.position === "below" ? "Vertical padding" : "Distance from bottom"}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input type="range" min="0" max="80" value={cta.paddingBottom} onChange={(e) => updateCTA(cta.id, "paddingBottom", parseInt(e.target.value))} className="flex-1" />
+                      <span className="text-xs text-muted-foreground w-8">{cta.paddingBottom}px</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 4: Colors */}
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">Button Color</label>
+                    <div className="flex gap-2">
+                      <input type="color" value={cta.buttonColor} onChange={(e) => updateCTA(cta.id, "buttonColor", e.target.value)} className="w-10 h-10 rounded border border-border cursor-pointer" />
+                      <Input value={cta.buttonColor} onChange={(e) => updateCTA(cta.id, "buttonColor", e.target.value)} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">Text Color</label>
+                    <div className="flex gap-2">
+                      <input type="color" value={cta.buttonTextColor} onChange={(e) => updateCTA(cta.id, "buttonTextColor", e.target.value)} className="w-10 h-10 rounded border border-border cursor-pointer" />
+                      <Input value={cta.buttonTextColor} onChange={(e) => updateCTA(cta.id, "buttonTextColor", e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 5: Typography & Size */}
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">Font</label>
+                    <select value={cta.fontFamily} onChange={(e) => updateCTA(cta.id, "fontFamily", e.target.value)} className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm">
+                      {fontOptions.map((f) => (
+                        <option key={f.value} value={f.value} style={{ fontFamily: f.value }}>{f.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">Font Size</label>
+                    <div className="flex items-center gap-2">
+                      <input type="range" min="12" max="32" value={cta.fontSize} onChange={(e) => updateCTA(cta.id, "fontSize", parseInt(e.target.value))} className="flex-1" />
+                      <span className="text-xs text-muted-foreground w-8">{cta.fontSize}px</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">Button Size</label>
+                    <div className="flex items-center gap-2">
+                      <input type="range" min="8" max="48" value={cta.paddingY} onChange={(e) => {
+                        const py = parseInt(e.target.value);
+                        updateCTA(cta.id, "paddingY", py);
+                        updateCTA(cta.id, "paddingX", Math.round(py * 2.5));
+                      }} className="flex-1" />
+                      <span className="text-xs text-muted-foreground w-8">{cta.paddingY}px</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 6: Open in new tab */}
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" checked={cta.openInNewTab} onChange={(e) => updateCTA(cta.id, "openInNewTab", e.target.checked)} className="rounded" id={`newTab-${cta.id}`} />
+                  <label htmlFor={`newTab-${cta.id}`} className="text-sm">Open link in new tab</label>
+                </div>
+              </CardContent>
             </Card>
           ))}
           <Button className="w-full" variant="secondary" onClick={addCTA}>
