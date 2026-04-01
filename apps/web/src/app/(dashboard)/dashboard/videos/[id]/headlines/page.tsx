@@ -13,6 +13,31 @@ import { api } from "@/lib/api-client";
 
 type VariantType = "text" | "image" | "gif";
 
+const googleFonts = [
+  "Inter", "Roboto", "Open Sans", "Montserrat", "Lato", "Poppins", "Raleway",
+  "Oswald", "Playfair Display", "Merriweather", "Nunito", "Ubuntu", "Rubik",
+  "Work Sans", "DM Sans", "Manrope", "Plus Jakarta Sans", "Space Grotesk",
+  "Outfit", "Sora", "Bebas Neue", "Archivo", "Barlow", "Cabin", "Comfortaa",
+  "Crimson Text", "Dancing Script", "Exo 2", "Fira Sans", "Heebo",
+  "IBM Plex Sans", "Josefin Sans", "Kanit", "Lexend", "Libre Baskerville",
+  "Mulish", "Noto Sans", "PT Sans", "Quicksand", "Righteous",
+  "Source Sans 3", "Titillium Web", "Urbanist", "Varela Round", "Vollkorn",
+  "Yanone Kaffeesatz", "Zilla Slab", "Anton", "Archivo Black", "Bangers",
+  "Caveat", "Courgette", "Fredoka", "Gloria Hallelujah", "Great Vibes",
+  "Inconsolata", "Indie Flower", "Lobster", "Pacifico", "Permanent Marker",
+  "Press Start 2P", "Sacramento", "Satisfy", "Shadows Into Light", "Special Elite",
+];
+
+const loadedFonts = new Set<string>();
+function loadGoogleFont(fontFamily: string) {
+  if (!fontFamily || fontFamily === "sans-serif" || loadedFonts.has(fontFamily)) return;
+  loadedFonts.add(fontFamily);
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily)}:wght@400;500;600;700;800&display=swap`;
+  document.head.appendChild(link);
+}
+
 interface Variant {
   id: string;
   type: VariantType;
@@ -23,6 +48,7 @@ interface Variant {
   style?: {
     fontSize?: string;
     fontWeight?: string;
+    fontFamily?: string;
     color?: string;
     backgroundColor?: string;
     textAlign?: string;
@@ -111,7 +137,7 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
         id: `v-${Date.now()}`, type,
         text: type === "text" ? "Your compelling headline here" : undefined,
         imageUrl: type !== "text" ? "" : undefined,
-        style: type === "text" ? { fontSize: "28px", fontWeight: "700", color: "#ffffff", backgroundColor: "transparent", textAlign: "center", padding: "12px 16px" } : undefined,
+        style: type === "text" ? { fontSize: "28px", fontWeight: "700", fontFamily: "sans-serif", color: "#ffffff", backgroundColor: "transparent", textAlign: "center", padding: "12px 16px" } : undefined,
         weight: 100, impressions: 0, plays: 0, conversions: 0, conversionRate: 0, isWinner: false, isEliminated: false,
       }],
     }));
@@ -148,14 +174,24 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
   const isOverlay = config.position === "overlay-top" || config.position === "overlay-bottom";
   const abTestRunning = config.abTestStatus === "running";
 
+  // Load fonts for all text variants
+  config.variants.forEach((v) => {
+    if (v.type === "text" && v.style?.fontFamily && v.style.fontFamily !== "sans-serif") {
+      loadGoogleFont(v.style.fontFamily);
+    }
+  });
+
   // Render headline content for preview
   const renderHeadlinePreview = (variant: Variant | undefined) => {
     if (!variant) return <div className="text-muted-foreground text-sm italic py-4 text-center">Add a headline variant to see preview</div>;
     if (variant.type === "text") {
+      const ff = variant.style?.fontFamily || "sans-serif";
+      const fontFamilyCSS = ff === "sans-serif" ? "sans-serif" : `'${ff}', sans-serif`;
       return (
         <div style={{
           fontSize: variant.style?.fontSize || "28px",
           fontWeight: variant.style?.fontWeight || "700",
+          fontFamily: fontFamilyCSS,
           color: variant.style?.color || "#ffffff",
           textAlign: (variant.style?.textAlign as any) || "center",
           padding: variant.style?.padding || "12px 16px",
@@ -386,7 +422,25 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
                   <label className="text-sm font-medium mb-1.5 block">Headline Text</label>
                   <Input value={variant.text || ""} onChange={(e) => updateVariant(variant.id, { text: e.target.value })} placeholder="Your compelling headline here..." />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-3">
+                    <label className="text-xs font-medium mb-1 block">Font Family</label>
+                    <select
+                      value={variant.style?.fontFamily || "sans-serif"}
+                      onChange={(e) => {
+                        const f = e.target.value;
+                        if (f !== "sans-serif") loadGoogleFont(f);
+                        updateVariant(variant.id, { style: { ...variant.style, fontFamily: f } });
+                      }}
+                      className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm"
+                      style={{ fontFamily: variant.style?.fontFamily && variant.style.fontFamily !== "sans-serif" ? `'${variant.style.fontFamily}', sans-serif` : "sans-serif" }}
+                    >
+                      <option value="sans-serif">System Default (Sans-serif)</option>
+                      {googleFonts.map((f) => (
+                        <option key={f} value={f}>{f}</option>
+                      ))}
+                    </select>
+                  </div>
                   <div>
                     <label className="text-xs font-medium mb-1 block">Font Size</label>
                     <div className="flex items-center gap-2">
