@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useState, useRef } from "react";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,103 @@ function loadGoogleFont(fontFamily: string) {
   link.rel = "stylesheet";
   link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily)}:wght@400;500;600;700;800&display=swap`;
   document.head.appendChild(link);
+}
+
+let allFontsLoaded = false;
+function loadAllGoogleFonts() {
+  if (allFontsLoaded) return;
+  allFontsLoaded = true;
+  // Load all fonts in one request (Google Fonts supports multiple families)
+  const families = googleFonts.map((f) => `family=${encodeURIComponent(f)}:wght@700`).join("&");
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = `https://fonts.googleapis.com/css2?${families}&display=swap`;
+  document.head.appendChild(link);
+  googleFonts.forEach((f) => loadedFonts.add(f));
+}
+
+function FontPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Load all fonts when picker opens
+  useEffect(() => {
+    if (open) loadAllGoogleFonts();
+  }, [open]);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const filtered = search
+    ? googleFonts.filter((f) => f.toLowerCase().includes(search.toLowerCase()))
+    : googleFonts;
+
+  const displayFont = value === "sans-serif" ? "System Default" : value;
+  const fontCSS = value === "sans-serif" ? "sans-serif" : `'${value}', sans-serif`;
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm text-left flex items-center justify-between hover:bg-muted/50 transition-colors"
+      >
+        <span style={{ fontFamily: fontCSS }} className="truncate">{displayFont}</span>
+        <svg className={`w-4 h-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+      </button>
+
+      {open && (
+        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-background border border-border rounded-lg shadow-xl overflow-hidden">
+          {/* Search */}
+          <div className="p-2 border-b border-border">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search fonts..."
+              className="w-full h-8 rounded-md border border-border bg-muted px-3 text-sm outline-none focus:border-primary"
+              autoFocus
+            />
+          </div>
+          {/* Font list */}
+          <div className="max-h-64 overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => { onChange("sans-serif"); setOpen(false); setSearch(""); }}
+              className={`w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors ${value === "sans-serif" ? "bg-primary/10 text-primary" : ""}`}
+            >
+              System Default (Sans-serif)
+            </button>
+            {filtered.map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => { onChange(f); loadGoogleFont(f); setOpen(false); setSearch(""); }}
+                className={`w-full text-left px-3 py-2.5 hover:bg-muted/50 transition-colors border-b border-border/50 last:border-0 ${value === f ? "bg-primary/10 text-primary" : ""}`}
+                style={{ fontFamily: `'${f}', sans-serif` }}
+              >
+                <span className="text-base">{f}</span>
+                <span className="block text-xs text-muted-foreground mt-0.5" style={{ fontFamily: `'${f}', sans-serif` }}>
+                  The quick brown fox jumps over the lazy dog
+                </span>
+              </button>
+            ))}
+            {filtered.length === 0 && (
+              <div className="px-3 py-4 text-sm text-muted-foreground text-center">No fonts match &quot;{search}&quot;</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 interface Variant {
@@ -425,21 +522,10 @@ export default function HeadlinesPage({ params }: { params: Promise<{ id: string
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-3">
                     <label className="text-xs font-medium mb-1 block">Font Family</label>
-                    <select
+                    <FontPicker
                       value={variant.style?.fontFamily || "sans-serif"}
-                      onChange={(e) => {
-                        const f = e.target.value;
-                        if (f !== "sans-serif") loadGoogleFont(f);
-                        updateVariant(variant.id, { style: { ...variant.style, fontFamily: f } });
-                      }}
-                      className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm"
-                      style={{ fontFamily: variant.style?.fontFamily && variant.style.fontFamily !== "sans-serif" ? `'${variant.style.fontFamily}', sans-serif` : "sans-serif" }}
-                    >
-                      <option value="sans-serif">System Default (Sans-serif)</option>
-                      {googleFonts.map((f) => (
-                        <option key={f} value={f}>{f}</option>
-                      ))}
-                    </select>
+                      onChange={(f) => updateVariant(variant.id, { style: { ...variant.style, fontFamily: f } })}
+                    />
                   </div>
                   <div>
                     <label className="text-xs font-medium mb-1 block">Font Size</label>
