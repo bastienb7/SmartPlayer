@@ -150,7 +150,7 @@ export default function ExitIntentPage({ params }: { params: Promise<{ id: strin
             <Zap className="w-6 h-6 text-primary" /> Exit-Intent Popup
           </h1>
           <p className="text-muted-foreground">
-            Show a popup when viewers try to leave, encouraging them to keep watching.
+            Show a popup when the visitor tries to leave the page (moves cursor to close tab, switches tab, presses back, or goes idle). Helps recover abandoning visitors and keep them on your sales page.
           </p>
         </div>
         <div className="flex gap-2">
@@ -174,7 +174,7 @@ export default function ExitIntentPage({ params }: { params: Promise<{ id: strin
 
       {/* Enable toggle */}
       <Card className="mb-6">
-        <FeatureToggle label="Enable Exit-Intent" description="Show a popup when viewers try to leave" enabled={config.enabled} onToggle={(v) => update("enabled", v)} />
+        <FeatureToggle label="Enable Exit-Intent" description="Show a popup when the visitor tries to leave the page (cursor exits, tab switch, back button, idle)" enabled={config.enabled} onToggle={(v) => update("enabled", v)} />
       </Card>
 
       {config.enabled && (
@@ -249,10 +249,10 @@ export default function ExitIntentPage({ params }: { params: Promise<{ id: strin
           <Card className="mb-6">
             <CardTitle className="mb-4">Triggers</CardTitle>
             <CardContent>
-              <FeatureToggle label="Mouse Leave" description="Show popup when cursor moves outside the page" enabled={config.triggerOnMouseLeave} onToggle={(v) => update("triggerOnMouseLeave", v)} />
-              <FeatureToggle label="Tab Switch" description="Show popup when viewer switches to another tab" enabled={config.triggerOnTabSwitch} onToggle={(v) => update("triggerOnTabSwitch", v)} />
-              <FeatureToggle label="Back Button" description="Show popup when viewer presses browser back button" enabled={config.triggerOnBackButton} onToggle={(v) => update("triggerOnBackButton", v)} />
-              <FeatureToggle label="Idle Detection" description="Show popup when viewer is idle for a specified time" enabled={config.triggerOnIdle} onToggle={(v) => update("triggerOnIdle", v)} />
+              <FeatureToggle label="Mouse Leave" description="Triggered when the cursor moves toward the browser's close/back buttons (desktop only)" enabled={config.triggerOnMouseLeave} onToggle={(v) => update("triggerOnMouseLeave", v)} />
+              <FeatureToggle label="Tab Switch" description="Triggered when the visitor switches to another browser tab or minimizes the window" enabled={config.triggerOnTabSwitch} onToggle={(v) => update("triggerOnTabSwitch", v)} />
+              <FeatureToggle label="Back Button" description="Triggered when the visitor presses the browser back button to leave your page" enabled={config.triggerOnBackButton} onToggle={(v) => update("triggerOnBackButton", v)} />
+              <FeatureToggle label="Idle Detection" description="Triggered when the visitor stops interacting with the page for a specified duration" enabled={config.triggerOnIdle} onToggle={(v) => update("triggerOnIdle", v)} />
               {config.triggerOnIdle && (
                 <div className="mt-3">
                   <label className="text-sm font-medium mb-1.5 block">Idle Timeout (seconds)</label>
