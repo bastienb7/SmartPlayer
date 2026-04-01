@@ -108,6 +108,16 @@ export const api = {
     return request<{ daily: any[] }>(`/analytics/daily?${qs}`);
   },
 
+  // Advanced Analytics
+  getAnalyticsDetails: (videoId: string) =>
+    request<any>(`/analytics/details?videoId=${videoId}`),
+  getAnalyticsHeatmap: (videoId: string) =>
+    request<{ heatmap: any[] }>(`/analytics/heatmap?videoId=${videoId}`),
+  getAnalyticsDropoff: (videoId: string) =>
+    request<{ dropoff: any[] }>(`/analytics/dropoff?videoId=${videoId}`),
+  getAnalyticsVariants: (videoId: string) =>
+    request<{ variants: any[] }>(`/analytics/variants?videoId=${videoId}`),
+
   // Embed
   getEmbedCode: (videoId: string) => request<any>(`/embed/${videoId}/code`),
 };
