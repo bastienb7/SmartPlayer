@@ -139,6 +139,27 @@ export default function CTAEditorPage({ params }: { params: Promise<{ id: string
                       <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>
                   </div>
+                  {/* Live Preview */}
+                  <div className="bg-muted rounded-lg p-6 mb-4 flex flex-col items-center gap-2">
+                    <div className="text-xs text-muted-foreground mb-1">Preview</div>
+                    <div className="relative w-full max-w-md aspect-video bg-black rounded-lg flex items-end justify-center pb-6">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-lg" />
+                      <button
+                        className="relative z-10 px-8 py-3 rounded-lg font-semibold text-sm shadow-lg transition-transform hover:scale-105"
+                        style={{
+                          backgroundColor: cta.buttonColor,
+                          color: cta.buttonTextColor,
+                        }}
+                      >
+                        {cta.text || "Click Here"}
+                      </button>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Appears at {cta.timestamp}s for {cta.duration}s
+                      {cta.url && cta.url !== "https://" && <span> &rarr; {cta.url}</span>}
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium mb-1.5 block">Button Text</label>
@@ -161,6 +182,13 @@ export default function CTAEditorPage({ params }: { params: Promise<{ id: string
                       <div className="flex gap-2">
                         <input type="color" value={cta.buttonColor} onChange={(e) => updateCTA(cta.id, "buttonColor", e.target.value)} className="w-10 h-10 rounded border border-border cursor-pointer" />
                         <Input value={cta.buttonColor} onChange={(e) => updateCTA(cta.id, "buttonColor", e.target.value)} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1.5 block">Text Color</label>
+                      <div className="flex gap-2">
+                        <input type="color" value={cta.buttonTextColor} onChange={(e) => updateCTA(cta.id, "buttonTextColor", e.target.value)} className="w-10 h-10 rounded border border-border cursor-pointer" />
+                        <Input value={cta.buttonTextColor} onChange={(e) => updateCTA(cta.id, "buttonTextColor", e.target.value)} />
                       </div>
                     </div>
                     <div className="flex items-end">
