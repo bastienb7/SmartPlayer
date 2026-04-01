@@ -16,9 +16,118 @@ export interface PlayerConfig {
   analytics: AnalyticsConfig;
   pixels: PixelConfig;
   style: StyleConfig;
+  // New features
+  pageSync?: PageSyncConfig;
+  pip?: PiPConfig;
+  exitIntent?: ExitIntentConfig;
+  countdown?: CountdownConfig;
+  socialProof?: SocialProofConfig;
+  chapters?: SmartChaptersConfig;
+  polls?: InteractivePollConfig;
+  // Assigned variants
   assignedHeadlineVariant?: string;
   assignedVideoVariant?: string;
   assignedSpeedVariant?: number;
+}
+
+// --- New feature configs (imported by Player.ts) ---
+
+export interface PageSyncRule {
+  selector: string;
+  action: "show" | "hide" | "addClass" | "removeClass" | "scrollTo" | "setAttribute" | "callback";
+  at: number;
+  endAt?: number;
+  className?: string;
+  attribute?: string;
+  value?: string;
+  callback?: (el: Element, time: number) => void;
+}
+export interface PageSyncConfig { enabled: boolean; rules: PageSyncRule[]; }
+
+export interface PiPConfig {
+  enabled: boolean;
+  position: "bottom-right" | "bottom-left" | "top-right" | "top-left";
+  width: number;
+  offsetX: number;
+  offsetY: number;
+  showClose: boolean;
+  flashOnCTA: boolean;
+}
+
+export interface ExitIntentConfig {
+  enabled: boolean;
+  message: string;
+  subMessage?: string;
+  buttonText: string;
+  imageUrl?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  buttonColor?: string;
+  triggerOnMouseLeave: boolean;
+  triggerOnTabSwitch: boolean;
+  triggerOnBackButton: boolean;
+  triggerOnIdle: boolean;
+  idleTimeoutSeconds: number;
+  maxShowsPerSession: number;
+  minWatchSeconds: number;
+  contextMessages?: {
+    beforePitch?: string;
+    duringPitch?: string;
+    afterPitch?: string;
+  };
+  pitchTimestamp?: number;
+}
+
+export interface CountdownConfig {
+  enabled: boolean;
+  showAtTimestamp: number;
+  mode: "realtime" | "session" | "evergreen";
+  deadline?: string;
+  durationSeconds?: number;
+  message: string;
+  backgroundColor?: string;
+  textColor?: string;
+  timerColor?: string;
+  position: "top" | "bottom" | "overlay-bottom";
+}
+
+export interface SocialProofMessage { text: string; avatar?: string; showAt?: number; }
+export interface SocialProofConfig {
+  enabled: boolean;
+  messages: SocialProofMessage[];
+  position: "bottom-left" | "bottom-right" | "top-left" | "top-right";
+  intervalSeconds: number;
+  displayDurationMs: number;
+  maxPerSession: number;
+  showAfterTimestamp?: number;
+}
+
+export interface Chapter { id: string; title: string; timestamp: number; hidden: boolean; }
+export interface SmartChaptersConfig {
+  enabled: boolean;
+  chapters: Chapter[];
+  allowSeek: boolean;
+  showTooltip: boolean;
+  markerColor?: string;
+}
+
+export interface PollOption { id: string; text: string; color?: string; }
+export interface PollQuestion {
+  id: string;
+  timestamp: number;
+  question: string;
+  options: PollOption[];
+  pauseVideo: boolean;
+  autoDismissSeconds: number;
+  multiSelect: boolean;
+}
+export interface InteractivePollConfig {
+  enabled: boolean;
+  polls: PollQuestion[];
+  webhookUrl?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  optionColor?: string;
 }
 
 export interface AutoplayVariant {

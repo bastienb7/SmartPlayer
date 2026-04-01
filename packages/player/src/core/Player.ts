@@ -11,6 +11,13 @@ import { ResumePlay } from "../features/ResumePlay";
 import { MiniHook } from "../features/MiniHook";
 import { TurboSpeed } from "../features/TurboSpeed";
 import { PixelTracking } from "../features/PixelTracking";
+import { PageSync } from "../features/PageSync";
+import { PictureInPicture } from "../features/PictureInPicture";
+import { ExitIntent } from "../features/ExitIntent";
+import { CountdownTimer } from "../features/CountdownTimer";
+import { SocialProof } from "../features/SocialProof";
+import { SmartChapters } from "../features/SmartChapters";
+import { InteractivePoll } from "../features/InteractivePoll";
 import { Tracker } from "../analytics/Tracker";
 import { Heartbeat } from "../analytics/Heartbeat";
 import { Controls } from "../ui/Controls";
@@ -113,6 +120,55 @@ export class Player {
     const pixels = new PixelTracking(this.bus, this.config.pixels);
     pixels.init();
     this.features.push(pixels);
+
+    // Page Sync / Delay Code
+    if (this.config.pageSync) {
+      const pageSync = new PageSync(this.engine, this.bus, this.config.pageSync);
+      pageSync.init();
+      this.features.push(pageSync);
+    }
+
+    // Picture-in-Picture
+    if (this.config.pip) {
+      const pip = new PictureInPicture(this.engine, this.bus, this.config.pip, this.container);
+      pip.init();
+      this.features.push(pip);
+    }
+
+    // Exit-Intent Popup
+    if (this.config.exitIntent) {
+      const exitIntent = new ExitIntent(this.engine, this.bus, this.config.exitIntent, wrapper);
+      exitIntent.init();
+      this.features.push(exitIntent);
+    }
+
+    // Countdown Timer
+    if (this.config.countdown) {
+      const countdown = new CountdownTimer(this.bus, this.config.countdown, this.container);
+      countdown.init();
+      this.features.push(countdown);
+    }
+
+    // Social Proof
+    if (this.config.socialProof) {
+      const socialProof = new SocialProof(this.bus, this.config.socialProof, this.container);
+      socialProof.init();
+      this.features.push(socialProof);
+    }
+
+    // Smart Chapters
+    if (this.config.chapters) {
+      const chapters = new SmartChapters(this.engine, this.bus, this.config.chapters, this.container);
+      chapters.init();
+      this.features.push(chapters);
+    }
+
+    // Interactive Polls
+    if (this.config.polls) {
+      const polls = new InteractivePoll(this.engine, this.bus, this.config.polls, this.container);
+      polls.init();
+      this.features.push(polls);
+    }
 
     // Analytics
     const tracker = new Tracker(
