@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { db, players, videos, ctas, pixels, headlines, headlineVariants } from "@smartplayer/db";
+import { db, players, videos, ctas, pixels, headlines, headlineVariants, exitIntents } from "@smartplayer/db";
 import { eq } from "drizzle-orm";
 import { cacheGet, cacheSet } from "../lib/redis";
 import { playerConfigRateLimit } from "../middleware/rateLimit";
@@ -106,6 +106,7 @@ app.get("/:videoId/config", playerConfigRateLimit, async (c) => {
     },
     pixels: pixelConfig,
     style: player.styleConfig,
+    exitIntent: await buildExitIntentConfig(player.id),
   };
 
   // Cache for 60 seconds
@@ -198,6 +199,37 @@ async function buildHeadlineConfig(playerId: string) {
     targetSelector: headline.targetSelector,
     clickUrl: headline.clickUrl,
     clickOpenNewTab: headline.clickOpenNewTab,
+  };
+}
+
+/**
+ * Build exit-intent config for the player.
+ */
+async function buildExitIntentConfig(playerId: string) {
+  const config = await db.query.exitIntents.findFirst({
+    where: eq(exitIntents.playerId, playerId),
+  });
+
+  if (!config) return undefined;
+
+  return {
+    enabled: true,
+    message: config.message,
+    subMessage: config.subMessage,
+    buttonText: config.buttonText,
+    imageUrl: config.imageUrl,
+    backgroundColor: config.backgroundColor,
+    textColor: config.textColor,
+    buttonColor: config.buttonColor,
+    triggerOnMouseLeave: config.triggerOnMouseLeave,
+    triggerOnTabSwitch: config.triggerOnTabSwitch,
+    triggerOnBackButton: config.triggerOnBackButton,
+    triggerOnIdle: config.triggerOnIdle,
+    idleTimeoutSeconds: config.idleTimeoutSeconds,
+    maxShowsPerSession: config.maxShowsPerSession,
+    minWatchSeconds: config.minWatchSeconds,
+    pitchTimestamp: config.pitchTimestamp,
+    contextMessages: config.contextMessages,
   };
 }
 
