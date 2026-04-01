@@ -17,13 +17,32 @@ interface Video {
   createdAt: string;
   plays?: number;
   thumbnailUrl?: string;
+  features?: string[];
 }
 
 const statusBadge = {
-  ready: { variant: "success" as const, label: "● Ready" },
-  processing: { variant: "warning" as const, label: "◌ Processing" },
-  uploading: { variant: "info" as const, label: "↑ Uploading" },
-  error: { variant: "error" as const, label: "✕ Error" },
+  ready: { variant: "success" as const, label: "Ready" },
+  processing: { variant: "warning" as const, label: "Processing" },
+  uploading: { variant: "info" as const, label: "Uploading" },
+  error: { variant: "error" as const, label: "Error" },
+};
+
+const featureColors: Record<string, string> = {
+  Autoplay: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
+  "Smart Progress": "bg-blue-500/15 text-blue-400 border-blue-500/20",
+  Resume: "bg-violet-500/15 text-violet-400 border-violet-500/20",
+  CTA: "bg-amber-500/15 text-amber-400 border-amber-500/20",
+  "Exit-Intent": "bg-rose-500/15 text-rose-400 border-rose-500/20",
+  Pixels: "bg-cyan-500/15 text-cyan-400 border-cyan-500/20",
+  Headlines: "bg-pink-500/15 text-pink-400 border-pink-500/20",
+  Analytics: "bg-slate-500/15 text-slate-400 border-slate-500/20",
+  "Mini-Hook": "bg-orange-500/15 text-orange-400 border-orange-500/20",
+  "Turbo Speed": "bg-indigo-500/15 text-indigo-400 border-indigo-500/20",
+  Recovery: "bg-teal-500/15 text-teal-400 border-teal-500/20",
+  Chapters: "bg-purple-500/15 text-purple-400 border-purple-500/20",
+  Countdown: "bg-red-500/15 text-red-400 border-red-500/20",
+  "Social Proof": "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
+  "Page Sync": "bg-lime-500/15 text-lime-400 border-lime-500/20",
 };
 
 export default function VideosPage() {
@@ -32,12 +51,22 @@ export default function VideosPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    api.getVideos()
+    api.getVideosWithFeatures()
       .then((data) => setVideos((data.videos || []).map((v: any) => ({
         ...v,
         createdAt: v.createdAt || v.created_at,
         thumbnailUrl: v.thumbnailUrl || v.poster_url || v.posterUrl,
+        features: v.features || [],
       }))))
+      .catch(() => {
+        // Fallback to regular endpoint if new one not available
+        return api.getVideos().then((data) => setVideos((data.videos || []).map((v: any) => ({
+          ...v,
+          createdAt: v.createdAt || v.created_at,
+          thumbnailUrl: v.thumbnailUrl || v.poster_url || v.posterUrl,
+          features: [],
+        }))));
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
@@ -94,7 +123,7 @@ export default function VideosPage() {
               <Link key={video.id} href={`/dashboard/videos/${video.id}`}>
                 <Card className="flex items-center gap-6 hover:border-primary/30 transition-colors cursor-pointer">
                   {/* Thumbnail */}
-                  <div className="w-40 h-24 bg-muted rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <div className="w-48 h-28 bg-muted rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                     {video.thumbnailUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover" />
@@ -108,7 +137,7 @@ export default function VideosPage() {
                       <h3 className="text-base font-semibold truncate">{video.title}</h3>
                       <Badge variant={badge.variant}>{badge.label}</Badge>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
                       {video.duration > 0 && (
                         <span className="flex items-center gap-1">
                           <Clock className="w-3.5 h-3.5" /> {formatDuration(video.duration)}
@@ -117,6 +146,19 @@ export default function VideosPage() {
                       <span>{formatDate(video.createdAt)}</span>
                       {(video.plays ?? 0) > 0 && <span>{video.plays!.toLocaleString()} plays</span>}
                     </div>
+                    {/* Features */}
+                    {video.features && video.features.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {video.features.map((f) => (
+                          <span
+                            key={f}
+                            className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${featureColors[f] || "bg-muted text-muted-foreground border-border"}`}
+                          >
+                            {f}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   {/* Actions */}
                   <button className="p-2 hover:bg-muted rounded-lg" onClick={(e) => e.preventDefault()}>

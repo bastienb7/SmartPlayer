@@ -23,6 +23,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 export const api = {
   // Videos
   getVideos: () => request<{ videos: any[] }>("/api/videos"),
+  getVideosWithFeatures: () => request<{ videos: any[] }>("/api/videos-with-features"),
   getVideo: (id: string) => request<any>(`/api/videos/${id}`),
   createVideo: (data: { title: string; contentType?: string }) =>
     request<{ video: any; uploadUrl: string }>("/api/videos", {
