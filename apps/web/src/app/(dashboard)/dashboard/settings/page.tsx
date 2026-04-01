@@ -1,17 +1,31 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Settings, CreditCard, Users } from "lucide-react";
+import { Settings, CreditCard, Globe, Save, Check, Loader2, AlertCircle, Copy } from "lucide-react";
 
 export default function SettingsPage() {
+  const [apiEndpoint, setApiEndpoint] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setApiEndpoint(window.location.origin);
+  }, []);
+
+  const copyEndpoint = () => {
+    navigator.clipboard.writeText(apiEndpoint);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="max-w-3xl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">Manage your account and organization.</p>
+        <p className="text-muted-foreground">Manage your account and configuration.</p>
       </div>
 
       {/* Plan */}
@@ -26,50 +40,61 @@ export default function SettingsPage() {
                 <span className="font-semibold">Free Plan</span>
                 <Badge>Current</Badge>
               </div>
-              <p className="text-sm text-muted-foreground">1 video, 1,000 plays/month</p>
-            </div>
-            <Button variant="primary">Upgrade</Button>
-          </div>
-          <div className="bg-muted rounded-lg p-4">
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-muted-foreground">Plays this month</span>
-              <span className="font-medium">0 / 1,000</span>
-            </div>
-            <div className="h-2 bg-background rounded-full overflow-hidden">
-              <div className="h-full bg-primary rounded-full" style={{ width: "0%" }} />
+              <p className="text-sm text-muted-foreground">Unlimited videos, unlimited plays</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Organization */}
+      {/* Embed / API */}
       <Card className="mb-6">
         <CardTitle className="flex items-center gap-2 mb-4">
-          <Users className="w-5 h-5 text-primary" /> Organization
+          <Globe className="w-5 h-5 text-primary" /> Embed Configuration
         </CardTitle>
         <CardContent>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Organization Name</label>
-              <Input defaultValue="My Organization" />
+              <label className="text-sm font-medium mb-1.5 block">API / Player Base URL</label>
+              <div className="flex gap-2">
+                <Input readOnly value={apiEndpoint} className="bg-muted font-mono text-sm" />
+                <Button variant="outline" size="icon" onClick={copyEndpoint}>
+                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Use this URL in your embed code and player configuration.
+              </p>
             </div>
-            <Button variant="secondary">Save</Button>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Player Script URL</label>
+              <div className="flex gap-2">
+                <Input readOnly value={`${apiEndpoint}/sp/smartplayer.min.js`} className="bg-muted font-mono text-sm" />
+                <Button variant="outline" size="icon" onClick={() => {
+                  navigator.clipboard.writeText(`${apiEndpoint}/sp/smartplayer.min.js`);
+                }}>
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* API Keys */}
+      {/* Embed Code Example */}
       <Card>
         <CardTitle className="flex items-center gap-2 mb-4">
-          <Settings className="w-5 h-5 text-primary" /> API
+          <Settings className="w-5 h-5 text-primary" /> Embed Code Template
         </CardTitle>
         <CardContent>
-          <div>
-            <label className="text-sm font-medium mb-1.5 block">API Endpoint</label>
-            <Input readOnly value="https://api.smartplayer.io" className="bg-muted" />
-          </div>
+          <pre className="bg-muted rounded-lg p-4 text-xs font-mono text-foreground overflow-x-auto leading-relaxed">
+{`<!-- Replace VIDEO_ID with your actual video ID -->
+<div id="smartplayer-VIDEO_ID"
+     data-api="${apiEndpoint}"></div>
+<script src="${apiEndpoint}/sp/smartplayer.min.js"
+        defer></script>`}
+          </pre>
           <p className="text-xs text-muted-foreground mt-2">
-            Use this endpoint in your player embed code.
+            Copy this template and replace VIDEO_ID with the ID from any video&apos;s detail page.
           </p>
         </CardContent>
       </Card>
