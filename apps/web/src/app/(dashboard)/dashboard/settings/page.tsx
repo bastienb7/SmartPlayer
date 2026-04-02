@@ -317,10 +317,9 @@ export default function SettingsPage() {
         defer></script>
 
 <!-- Video Funnel -->
-<div id="smartplayer-funnel-FUNNEL_ID"></div>
+<div id="smartplayer-funnel-FUNNEL_ID"
+     data-api="${settings?.baseUrl || ""}"></div>
 <script src="${settings?.playerScriptUrl || ""}"
-        data-funnel="FUNNEL_ID"
-        data-api="${settings?.baseUrl || ""}"
         defer></script>`}
             </pre>
             <Button
