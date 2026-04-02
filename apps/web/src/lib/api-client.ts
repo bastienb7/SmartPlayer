@@ -148,6 +148,17 @@ export const api = {
   getFunnelEmbed: (id: string) =>
     request<{ html: string }>(`/api/funnels/${id}/embed`),
 
+  // Folders (Library)
+  getFolders: () => request<{ folders: any[] }>("/api/folders"),
+  createFolder: (data: { name: string; color?: string }) =>
+    request<{ folder: any }>("/api/folders", { method: "POST", body: JSON.stringify(data) }),
+  updateFolder: (id: string, data: { name?: string; color?: string }) =>
+    request<any>(`/api/folders/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteFolder: (id: string) =>
+    request<any>(`/api/folders/${id}`, { method: "DELETE" }),
+  organizeVideo: (id: string, data: { folder_id?: string | null; category?: string; tags?: string[] }) =>
+    request<any>(`/api/videos/${id}/organize`, { method: "PATCH", body: JSON.stringify(data) }),
+
   // Embed
   getEmbedCode: (videoId: string) => request<any>(`/embed/${videoId}/code`),
 };
