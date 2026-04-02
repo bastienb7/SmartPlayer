@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, AlertCircle, Play } from "lucide-react";
+import { Loader2, AlertCircle, Play, Mail } from "lucide-react";
 
 export default function SignupPage() {
   const { signup } = useAuth();
@@ -15,13 +15,15 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     try {
-      await signup(email, password, name);
+      const msg = await signup(email, password, name);
+      if (msg) setSuccessMessage(msg);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -80,6 +82,12 @@ export default function SignupPage() {
               {error && (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
+                </div>
+              )}
+
+              {successMessage && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/30 text-primary text-sm">
+                  <Mail className="w-4 h-4 flex-shrink-0" /> {successMessage}
                 </div>
               )}
 

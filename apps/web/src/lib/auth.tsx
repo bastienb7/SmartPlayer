@@ -7,6 +7,7 @@ interface User {
   id: string;
   email: string;
   name: string;
+  emailVerified?: boolean;
 }
 
 interface AuthContextType {
@@ -14,8 +15,9 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
+  signup: (email: string, password: string, name: string) => Promise<string>;
   logout: () => void;
+  resendVerification: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -74,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(data.user);
   }, []);
 
-  const signup = useCallback(async (email: string, password: string, name: string) => {
+  const signup = useCallback(async (email: string, password: string, name: string): Promise<string> => {
     const res = await fetch(`${API_URL}/auth/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -85,7 +87,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("sp_token", data.token);
     setToken(data.token);
     setUser(data.user);
+    return data.message || "";
   }, []);
+
+  const resendVerification = useCallback(async () => {
+    if (!user?.email) return;
+    await fetch(`${API_URL}/auth/resend-verification`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: user.email }),
+    });
+  }, [user]);
 
   const logout = useCallback(() => {
     localStorage.removeItem("sp_token");
@@ -95,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, signup, logout, resendVerification }}>
       {children}
     </AuthContext.Provider>
   );
