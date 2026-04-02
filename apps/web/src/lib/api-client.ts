@@ -148,6 +148,15 @@ export const api = {
   getFunnelEmbed: (id: string) =>
     request<{ html: string }>(`/api/funnels/${id}/embed`),
 
+  // Settings
+  getSettings: () => request<any>("/api/settings"),
+  updateSettings: (data: { orgName: string }) =>
+    request<any>("/api/settings", { method: "PATCH", body: JSON.stringify(data) }),
+  regenerateApiKey: () =>
+    request<{ apiKey: string }>("/api/settings/regenerate-key", { method: "POST" }),
+  updatePlan: (plan: string) =>
+    request<any>("/api/settings/plan", { method: "PATCH", body: JSON.stringify({ plan }) }),
+
   // Folders (Library)
   getFolders: () => request<{ folders: any[] }>("/api/folders"),
   createFolder: (data: { name: string; color?: string }) =>
