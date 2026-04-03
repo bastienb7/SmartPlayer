@@ -9,7 +9,7 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import {
   Play, Eye, MousePointer, Clock, Code, Settings, BarChart3, Copy, Check,
   Type, Loader2, AlertCircle, Zap, MousePointer2, Repeat, Layers, Gauge,
-  Timer, Shield, Filter,
+  Timer, Shield, Filter, Sliders,
 } from "lucide-react";
 import { formatDuration, formatNumber } from "@/lib/utils";
 import { api } from "@/lib/api-client";
@@ -26,6 +26,7 @@ const featureLinks = [
   { href: "social-proof", icon: MousePointer2, label: "Social Proof" },
   { href: "page-sync", icon: Gauge, label: "Page Sync" },
   { href: "traffic-filter", icon: Filter, label: "Traffic Filter" },
+  { href: "playback", icon: Sliders, label: "Playback Options" },
 ];
 
 function VideoPlayer({ src, posterUrl }: { src?: string; posterUrl?: string }) {
