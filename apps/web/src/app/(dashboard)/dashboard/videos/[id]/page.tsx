@@ -81,6 +81,7 @@ export default function VideoDetailPage({ params }: { params: Promise<{ id: stri
   const { id } = use(params);
   const [video, setVideo] = useState<any>(null);
   const [stats, setStats] = useState({ plays: 0, viewers: 0, ctaClicks: 0, avgProgress: 0 });
+  const [activeFeatures, setActiveFeatures] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
@@ -89,10 +90,10 @@ export default function VideoDetailPage({ params }: { params: Promise<{ id: stri
     Promise.all([
       api.getVideo(id),
       api.getAnalyticsOverview({ videoId: id }).catch(() => null),
+      api.getPlayerConfig(id).catch(() => null),
     ])
-      .then(([videoData, analyticsData]) => {
+      .then(([videoData, analyticsData, playerConfig]) => {
         const v = videoData.video || videoData;
-        // Normalize snake_case → camelCase for compatibility
         setVideo({
           ...v,
           hlsUrl: v.hlsUrl || v.hls_url,
@@ -102,6 +103,36 @@ export default function VideoDetailPage({ params }: { params: Promise<{ id: stri
           createdAt: v.createdAt || v.created_at,
           updatedAt: v.updatedAt || v.updated_at,
         });
+
+        // Determine which features are active
+        if (playerConfig) {
+          const active = new Set<string>();
+          // Player settings is always "active"
+          active.add("player");
+          const p = playerConfig;
+          if (p.autoplayConfig?.enabled) active.add("player");
+          const headlines = p.headlinesConfig;
+          if (headlines && headlines.variants && headlines.variants.length > 0) active.add("headlines");
+          const ctas = p.ctaConfig;
+          if (Array.isArray(ctas) && ctas.length > 0) active.add("cta");
+          const exit = p.exitIntentConfig;
+          if (exit && (exit.enabled || exit.message)) active.add("exit-intent");
+          const pxls = p.pixelConfig;
+          if (Array.isArray(pxls) && pxls.length > 0) active.add("pixels");
+          if (p.resumePlayConfig?.enabled) active.add("resume");
+          const chapters = p.chaptersConfig;
+          if (Array.isArray(chapters) && chapters.length > 0) active.add("chapters");
+          const countdown = p.countdownConfig;
+          if (countdown && countdown.enabled) active.add("countdown");
+          const social = p.socialProofConfig;
+          if (Array.isArray(social) && social.length > 0) active.add("social-proof");
+          const pageSync = p.pageSyncConfig;
+          if (Array.isArray(pageSync) && pageSync.length > 0) active.add("page-sync");
+          const traffic = p.trafficFilterConfig;
+          if (traffic && traffic.enabled) active.add("traffic-filter");
+          if (p.analyticsEnabled) active.add("player");
+          setActiveFeatures(active);
+        }
         if (analyticsData) {
           setStats({
             plays: analyticsData.totalPlays ?? 0,
@@ -241,16 +272,33 @@ export default function VideoDetailPage({ params }: { params: Promise<{ id: stri
         <CardTitle className="mb-4">Features</CardTitle>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-            {featureLinks.map((f) => (
-              <Link
-                key={f.href}
-                href={`/dashboard/videos/${id}/${f.href}`}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border hover:border-primary/40 hover:bg-primary/5 transition-all group"
-              >
-                <f.icon className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                <span className="text-xs font-medium text-center">{f.label}</span>
-              </Link>
-            ))}
+            {featureLinks.map((f) => {
+              const isActive = activeFeatures.has(f.href);
+              return (
+                <Link
+                  key={f.href}
+                  href={`/dashboard/videos/${id}/${f.href}`}
+                  className={`relative flex flex-col items-center gap-2 p-4 rounded-xl border transition-all group ${
+                    isActive
+                      ? "border-primary/30 bg-primary/5 hover:border-primary/50 hover:bg-primary/10"
+                      : "border-border hover:border-border hover:bg-white/[0.02]"
+                  }`}
+                >
+                  {isActive && (
+                    <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary" />
+                  )}
+                  <f.icon className={`w-5 h-5 transition-colors ${
+                    isActive
+                      ? "text-primary"
+                      : "text-muted-foreground group-hover:text-foreground"
+                  }`} />
+                  <span className={`text-xs font-medium text-center ${isActive ? "text-foreground" : ""}`}>{f.label}</span>
+                  {isActive && (
+                    <span className="text-[9px] text-primary font-medium">Active</span>
+                  )}
+                </Link>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
