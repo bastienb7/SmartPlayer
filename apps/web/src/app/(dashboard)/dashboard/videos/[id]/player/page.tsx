@@ -51,6 +51,63 @@ interface PreviewProps {
   styleConfig: any;
 }
 
+// Wistia-style pill controls bar
+function PillControls({ playing, muted, volume, progress, currentTime, duration, primaryColor, controlsColor, controlsBackground, styleConfig, onPlayPause, onSeek, onVolumeChange, onMuteToggle, onFullscreen, formatTime }: any) {
+  return (
+    <div className="absolute bottom-3 left-3 right-3 z-10">
+      {/* Progress bar above pill */}
+      {styleConfig.showProgressBar && (
+        <div className="px-1 mb-1.5">
+          <div className="h-1 rounded-full bg-white/30 relative cursor-pointer group" onClick={onSeek}>
+            <div className="h-full rounded-full" style={{ width: `${progress}%`, backgroundColor: primaryColor }} />
+            <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity" style={{ left: `${progress}%`, marginLeft: "-6px", backgroundColor: primaryColor }} />
+          </div>
+        </div>
+      )}
+      {/* Pill bar */}
+      <div
+        className="flex items-center gap-2 px-3 py-2 rounded-2xl"
+        style={{ backgroundColor: controlsBackground || "rgba(10,10,20,0.85)", color: controlsColor }}
+      >
+        {styleConfig.showRewind && <button onClick={() => {}} className="hover:opacity-70"><SkipBack className="w-3.5 h-3.5" /></button>}
+        {styleConfig.showSmallPlayButton && (
+          <button onClick={onPlayPause} className="hover:opacity-70">
+            {playing ? <Pause className="w-4 h-4" fill="currentColor" /> : <Play className="w-4 h-4" fill="currentColor" />}
+          </button>
+        )}
+        {styleConfig.showFastForward && <button onClick={() => {}} className="hover:opacity-70"><SkipForward className="w-3.5 h-3.5" /></button>}
+        {styleConfig.showVideoTimer && (
+          <span className="text-xs font-mono whitespace-nowrap opacity-80">{formatTime(currentTime)} / {formatTime(duration)}</span>
+        )}
+        <div className="flex-1" />
+        {styleConfig.showSpeedControl && <span className="text-xs font-medium opacity-70 cursor-pointer hover:opacity-100">1×</span>}
+        {styleConfig.showVolume && (
+          <div className="flex items-center gap-1 group/vol">
+            <button onClick={onMuteToggle} className="hover:opacity-70">
+              {muted || volume === 0 ? <VolumeX className="w-3.5 h-3.5" /> : volume < 0.5 ? <Volume1 className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+            </button>
+            <input type="range" min="0" max="1" step="0.05" value={muted ? 0 : volume} onChange={onVolumeChange}
+              className="w-0 group-hover/vol:w-14 overflow-hidden transition-all duration-200 cursor-pointer"
+              style={{ accentColor: primaryColor }} />
+          </div>
+        )}
+        {styleConfig.showFullscreen && <button onClick={onFullscreen} className="hover:opacity-70"><Maximize className="w-3.5 h-3.5" /></button>}
+      </div>
+    </div>
+  );
+}
+
+// Rounded-rect Wistia-style big play button
+function RoundedRectPlayButton({ primaryColor, onClick }: { primaryColor: string; onClick: () => void }) {
+  return (
+    <div className="absolute inset-0 z-10 flex items-center justify-center" onClick={onClick}>
+      <div className="w-20 h-14 rounded-xl flex items-center justify-center cursor-pointer shadow-2xl" style={{ backgroundColor: primaryColor }}>
+        <Play className="w-7 h-7 text-white ml-1" fill="white" />
+      </div>
+    </div>
+  );
+}
+
 function LivePlayerPreview({ videoUrl, posterUrl, autoplayConfig, progressBarConfig, recoveryThumbnailConfig, styleConfig }: PreviewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
@@ -265,105 +322,80 @@ function LivePlayerPreview({ videoUrl, posterUrl, autoplayConfig, progressBarCon
 
       {/* Big play button (no autoplay, paused) */}
       {!showAutoplayOverlay && !playing && styleConfig.showBigPlayButton && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center" onClick={togglePlayPause}>
-          <div
-            className="w-20 h-20 rounded-full flex items-center justify-center cursor-pointer"
-            style={{ backgroundColor: styleConfig.primaryColor }}
-          >
-            <Play className="w-8 h-8 text-white ml-1" fill="white" />
-          </div>
-        </div>
+        styleConfig.playButtonStyle === "rounded-rect"
+          ? <RoundedRectPlayButton primaryColor={styleConfig.primaryColor} onClick={togglePlayPause} />
+          : (
+            <div className="absolute inset-0 z-10 flex items-center justify-center" onClick={togglePlayPause}>
+              <div className="w-20 h-20 rounded-full flex items-center justify-center cursor-pointer" style={{ backgroundColor: styleConfig.primaryColor }}>
+                <Play className="w-8 h-8 text-white ml-1" fill="white" />
+              </div>
+            </div>
+          )
       )}
 
-      {/* Controls bar */}
+      {/* Controls */}
       {styleConfig.showControls && (
-        <div
-          className="absolute bottom-0 left-0 right-0 z-10 transition-opacity duration-300"
-          style={{ opacity: controlsVisible || !styleConfig.controlsAutoHide ? 1 : 0 }}
-        >
-          {/* Progress bar */}
-          {styleConfig.showProgressBar && (
-            <div className="px-3 pb-1 pt-2">
-              <div
-                className="h-1.5 rounded-full bg-white/20 relative cursor-pointer group"
-                onClick={handleSeek}
-              >
-                <div
-                  className="h-full rounded-full transition-none"
-                  style={{ width: `${progress}%`, backgroundColor: styleConfig.primaryColor }}
-                />
-                <div
-                  className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ left: `${progress}%`, marginLeft: "-7px", backgroundColor: styleConfig.primaryColor }}
-                />
+        <div className="transition-opacity duration-300" style={{ opacity: controlsVisible || !styleConfig.controlsAutoHide ? 1 : 0 }}>
+          {styleConfig.controlsStyle === "pill" ? (
+            <PillControls
+              playing={playing} muted={muted} volume={volume} progress={progress}
+              currentTime={currentTime} duration={duration}
+              primaryColor={styleConfig.primaryColor}
+              controlsColor={styleConfig.controlsColor}
+              controlsBackground={styleConfig.controlsBackground}
+              styleConfig={styleConfig}
+              onPlayPause={togglePlayPause}
+              onSeek={handleSeek}
+              onVolumeChange={handleVolumeChange}
+              onMuteToggle={() => {
+                const v = videoRef.current;
+                if (!v) return;
+                v.muted = !v.muted;
+                setMuted(v.muted);
+              }}
+              onFullscreen={() => videoRef.current?.requestFullscreen?.()}
+              formatTime={formatTime}
+            />
+          ) : (
+            /* Default bar style */
+            <div className="absolute bottom-0 left-0 right-0 z-10">
+              {styleConfig.showProgressBar && (
+                <div className="px-3 pb-1 pt-2">
+                  <div className="h-1.5 rounded-full bg-white/20 relative cursor-pointer group" onClick={handleSeek}>
+                    <div className="h-full rounded-full transition-none" style={{ width: `${progress}%`, backgroundColor: styleConfig.primaryColor }} />
+                    <div className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity" style={{ left: `${progress}%`, marginLeft: "-7px", backgroundColor: styleConfig.primaryColor }} />
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center gap-2 px-3 py-2" style={{ backgroundColor: styleConfig.controlsBackground, color: styleConfig.controlsColor }}>
+                <div className="flex items-center gap-2">
+                  {styleConfig.showRewind && <button onClick={() => { if (videoRef.current) videoRef.current.currentTime -= 10; }}><SkipBack className="w-4 h-4 hover:opacity-70" /></button>}
+                  {styleConfig.showSmallPlayButton && (
+                    <button onClick={togglePlayPause}>
+                      {playing ? <Pause className="w-4 h-4 hover:opacity-70" fill="currentColor" /> : <Play className="w-4 h-4 hover:opacity-70" fill="currentColor" />}
+                    </button>
+                  )}
+                  {styleConfig.showFastForward && <button onClick={() => { if (videoRef.current) videoRef.current.currentTime += 10; }}><SkipForward className="w-4 h-4 hover:opacity-70" /></button>}
+                  {styleConfig.showVideoTimer && <span className="text-xs font-mono whitespace-nowrap">{formatTime(currentTime)} / {formatTime(duration)}</span>}
+                </div>
+                <div className="flex-1" />
+                <div className="flex items-center gap-2">
+                  {styleConfig.showSpeedControl && <span className="text-xs font-medium cursor-pointer hover:opacity-70">1×</span>}
+                  {styleConfig.showVolume && (
+                    <div className="flex items-center gap-1 group/vol">
+                      <button onClick={() => { const v = videoRef.current; if (!v) return; v.muted = !v.muted; setMuted(v.muted); }}>
+                        <VolumeIcon className="w-4 h-4 hover:opacity-70" />
+                      </button>
+                      <input type="range" min="0" max="1" step="0.05" value={muted ? 0 : volume} onChange={handleVolumeChange}
+                        className="w-0 group-hover/vol:w-16 overflow-hidden transition-all duration-200 cursor-pointer"
+                        style={{ accentColor: styleConfig.primaryColor }} />
+                    </div>
+                  )}
+                  {styleConfig.showFullscreen && <button onClick={() => videoRef.current?.requestFullscreen?.()}><Maximize className="w-4 h-4 hover:opacity-70" /></button>}
+                </div>
               </div>
             </div>
           )}
-
-          <div
-            className="flex items-center gap-2 px-3 py-2"
-            style={{ backgroundColor: styleConfig.controlsBackground, color: styleConfig.controlsColor }}
-          >
-            {/* Left side */}
-            <div className="flex items-center gap-2">
-              {styleConfig.showRewind && (
-                <button onClick={() => { if (videoRef.current) videoRef.current.currentTime -= 10; }}>
-                  <SkipBack className="w-4 h-4 hover:opacity-70 transition-opacity" />
-                </button>
-              )}
-              {styleConfig.showSmallPlayButton && (
-                <button onClick={togglePlayPause}>
-                  {playing
-                    ? <Pause className="w-4 h-4 hover:opacity-70 transition-opacity" fill="currentColor" />
-                    : <Play className="w-4 h-4 hover:opacity-70 transition-opacity" fill="currentColor" />
-                  }
-                </button>
-              )}
-              {styleConfig.showFastForward && (
-                <button onClick={() => { if (videoRef.current) videoRef.current.currentTime += 10; }}>
-                  <SkipForward className="w-4 h-4 hover:opacity-70 transition-opacity" />
-                </button>
-              )}
-              {styleConfig.showVideoTimer && (
-                <span className="text-xs font-mono whitespace-nowrap">
-                  {formatTime(currentTime)} / {formatTime(duration)}
-                </span>
-              )}
-            </div>
-
-            <div className="flex-1" />
-
-            {/* Right side */}
-            <div className="flex items-center gap-2">
-              {styleConfig.showSpeedControl && (
-                <span className="text-xs font-medium cursor-pointer hover:opacity-70">1x</span>
-              )}
-              {styleConfig.showVolume && (
-                <div className="flex items-center gap-1 group/vol">
-                  <button onClick={() => {
-                    const v = videoRef.current;
-                    if (!v) return;
-                    const newMuted = !v.muted;
-                    v.muted = newMuted;
-                    setMuted(newMuted);
-                  }}>
-                    <VolumeIcon className="w-4 h-4 hover:opacity-70 transition-opacity" />
-                  </button>
-                  <input
-                    type="range" min="0" max="1" step="0.05" value={muted ? 0 : volume}
-                    onChange={handleVolumeChange}
-                    className="w-0 group-hover/vol:w-16 overflow-hidden transition-all duration-200 accent-current cursor-pointer"
-                    style={{ accentColor: styleConfig.primaryColor }}
-                  />
-                </div>
-              )}
-              {styleConfig.showFullscreen && (
-                <button onClick={() => videoRef.current?.requestFullscreen?.()}>
-                  <Maximize className="w-4 h-4 hover:opacity-70 transition-opacity" />
-                </button>
-              )}
-            </div>
-          </div>
         </div>
       )}
     </div>
@@ -416,6 +448,8 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
     controlsColor: "#ffffff",
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     borderRadius: 8,
+    controlsStyle: "bar" as "bar" | "pill",
+    playButtonStyle: "circle" as "circle" | "rounded-rect",
     showControls: true,
     showBigPlayButton: false,
     showSmallPlayButton: true,
@@ -552,6 +586,53 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
                     <option value="rgba(0,0,0,0.9)">Very dark (90%)</option>
                     <option value="transparent">Transparent</option>
                   </select>
+                </div>
+              </div>
+
+              {/* Controls style + Play button style */}
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">Controls Style</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(["bar", "pill"] as const).map((style) => (
+                      <button
+                        key={style}
+                        onClick={() => setStyleConfig((c) => ({ ...c, controlsStyle: style }))}
+                        className={`relative flex flex-col items-center gap-1.5 p-3 rounded-lg border text-xs font-medium transition-all ${styleConfig.controlsStyle === style ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-border/80"}`}
+                      >
+                        {style === "bar" ? (
+                          <div className="w-full h-5 rounded bg-current opacity-60 flex items-center px-1.5 gap-1">
+                            <div className="w-2 h-2 rounded-full bg-white/50" />
+                            <div className="flex-1 h-0.5 rounded-full bg-white/40" />
+                          </div>
+                        ) : (
+                          <div className="w-full h-5 rounded-full bg-current opacity-60 flex items-center px-2 gap-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-white/50" />
+                            <div className="flex-1 h-0.5 rounded-full bg-white/40" />
+                          </div>
+                        )}
+                        <span className="capitalize">{style === "bar" ? "Barre" : "Pill (Wistia)"}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">Bouton Play</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(["circle", "rounded-rect"] as const).map((style) => (
+                      <button
+                        key={style}
+                        onClick={() => setStyleConfig((c) => ({ ...c, playButtonStyle: style, showBigPlayButton: true }))}
+                        className={`relative flex flex-col items-center gap-1.5 p-3 rounded-lg border text-xs font-medium transition-all ${styleConfig.playButtonStyle === style ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-border/80"}`}
+                      >
+                        {style === "circle"
+                          ? <div className="w-7 h-7 rounded-full bg-current opacity-60 flex items-center justify-center"><div className="w-0 h-0 border-t-[4px] border-t-transparent border-l-[7px] border-l-white/70 border-b-[4px] border-b-transparent ml-0.5" /></div>
+                          : <div className="w-10 h-7 rounded-md bg-current opacity-60 flex items-center justify-center"><div className="w-0 h-0 border-t-[4px] border-t-transparent border-l-[7px] border-l-white/70 border-b-[4px] border-b-transparent ml-0.5" /></div>
+                        }
+                        <span>{style === "circle" ? "Cercle" : "Rect (Wistia)"}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </CardContent>
