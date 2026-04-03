@@ -500,10 +500,10 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
         </div>
       )}
 
-      {/* Split layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-6 items-start">
+      {/* Main grid: left = Appearance + Player, right sidebar = settings toggles */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6 items-start">
 
-        {/* ── LEFT: Settings panels ─────────────────────────────────────────── */}
+        {/* ── LEFT: Appearance + Live Player ───────────────────────────────── */}
         <div className="flex flex-col gap-6">
 
           {/* APPEARANCE */}
@@ -516,36 +516,21 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
                 <div>
                   <label className="text-sm font-medium mb-1.5 block">Primary Color</label>
                   <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={styleConfig.primaryColor}
-                      onChange={(e) => setStyleConfig((c) => ({ ...c, primaryColor: e.target.value }))}
-                      className="w-10 h-10 rounded border border-border cursor-pointer"
-                    />
+                    <input type="color" value={styleConfig.primaryColor} onChange={(e) => setStyleConfig((c) => ({ ...c, primaryColor: e.target.value }))} className="w-10 h-10 rounded border border-border cursor-pointer" />
                     <Input value={styleConfig.primaryColor} onChange={(e) => setStyleConfig((c) => ({ ...c, primaryColor: e.target.value }))} />
                   </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-1.5 block">Controls Color</label>
                   <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={styleConfig.controlsColor}
-                      onChange={(e) => setStyleConfig((c) => ({ ...c, controlsColor: e.target.value }))}
-                      className="w-10 h-10 rounded border border-border cursor-pointer"
-                    />
+                    <input type="color" value={styleConfig.controlsColor} onChange={(e) => setStyleConfig((c) => ({ ...c, controlsColor: e.target.value }))} className="w-10 h-10 rounded border border-border cursor-pointer" />
                     <Input value={styleConfig.controlsColor} onChange={(e) => setStyleConfig((c) => ({ ...c, controlsColor: e.target.value }))} />
                   </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-1.5 block">Background Color</label>
                   <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={styleConfig.backgroundColor}
-                      onChange={(e) => setStyleConfig((c) => ({ ...c, backgroundColor: e.target.value }))}
-                      className="w-10 h-10 rounded border border-border cursor-pointer"
-                    />
+                    <input type="color" value={styleConfig.backgroundColor} onChange={(e) => setStyleConfig((c) => ({ ...c, backgroundColor: e.target.value }))} className="w-10 h-10 rounded border border-border cursor-pointer" />
                     <Input value={styleConfig.backgroundColor} onChange={(e) => setStyleConfig((c) => ({ ...c, backgroundColor: e.target.value }))} />
                   </div>
                 </div>
@@ -554,22 +539,13 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
                 <div>
                   <label className="text-sm font-medium mb-1.5 block">Border Radius</label>
                   <div className="flex items-center gap-3">
-                    <input
-                      type="range" min="0" max="24"
-                      value={styleConfig.borderRadius}
-                      onChange={(e) => setStyleConfig((c) => ({ ...c, borderRadius: parseInt(e.target.value) }))}
-                      className="flex-1"
-                    />
+                    <input type="range" min="0" max="24" value={styleConfig.borderRadius} onChange={(e) => setStyleConfig((c) => ({ ...c, borderRadius: parseInt(e.target.value) }))} className="flex-1" />
                     <span className="text-xs text-muted-foreground w-10">{styleConfig.borderRadius}px</span>
                   </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-1.5 block">Controls Bar Background</label>
-                  <select
-                    value={styleConfig.controlsBackground}
-                    onChange={(e) => setStyleConfig((c) => ({ ...c, controlsBackground: e.target.value }))}
-                    className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm"
-                  >
+                  <select value={styleConfig.controlsBackground} onChange={(e) => setStyleConfig((c) => ({ ...c, controlsBackground: e.target.value }))} className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm">
                     <option value="rgba(0,0,0,0.7)">Dark (70%)</option>
                     <option value="rgba(0,0,0,0.5)">Medium (50%)</option>
                     <option value="rgba(0,0,0,0.3)">Light (30%)</option>
@@ -581,183 +557,13 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
             </CardContent>
           </Card>
 
-          {/* CONTROLS */}
-          <Card>
-            <CardTitle className="mb-4">Controls Visibility</CardTitle>
-            <CardContent>
-              <FeatureToggle
-                label="Show Controls Bar"
-                description="Display the controls bar at the bottom of the player"
-                enabled={styleConfig.showControls}
-                onToggle={(v) => setStyleConfig((c) => ({ ...c, showControls: v }))}
-              />
-              {styleConfig.showControls && (
-                <>
-                  <FeatureToggle label="Progress Bar" description="Seekable timeline bar" enabled={styleConfig.showProgressBar} onToggle={(v) => setStyleConfig((c) => ({ ...c, showProgressBar: v }))} />
-                  <FeatureToggle label="Play/Pause Button" description="Small play/pause in controls bar" enabled={styleConfig.showSmallPlayButton} onToggle={(v) => setStyleConfig((c) => ({ ...c, showSmallPlayButton: v }))} />
-                  <FeatureToggle label="Video Timer" description="Show current time / total duration" enabled={styleConfig.showVideoTimer} onToggle={(v) => setStyleConfig((c) => ({ ...c, showVideoTimer: v }))} />
-                  <FeatureToggle label="Volume" description="Volume control icon" enabled={styleConfig.showVolume} onToggle={(v) => setStyleConfig((c) => ({ ...c, showVolume: v }))} />
-                  <FeatureToggle label="Fullscreen" description="Fullscreen toggle button" enabled={styleConfig.showFullscreen} onToggle={(v) => setStyleConfig((c) => ({ ...c, showFullscreen: v }))} />
-                  <FeatureToggle label="Rewind (10s)" description="Skip back 10 seconds" enabled={styleConfig.showRewind} onToggle={(v) => setStyleConfig((c) => ({ ...c, showRewind: v }))} />
-                  <FeatureToggle label="Fast Forward (10s)" description="Skip ahead 10 seconds" enabled={styleConfig.showFastForward} onToggle={(v) => setStyleConfig((c) => ({ ...c, showFastForward: v }))} />
-                  <FeatureToggle label="Speed Control" description="Playback speed selector (1x, 1.5x, 2x)" enabled={styleConfig.showSpeedControl} onToggle={(v) => setStyleConfig((c) => ({ ...c, showSpeedControl: v }))} />
-                  <FeatureToggle label="Big Play Button" description="Large centered play button on the video" enabled={styleConfig.showBigPlayButton} onToggle={(v) => setStyleConfig((c) => ({ ...c, showBigPlayButton: v }))} />
-                  <FeatureToggle label="Auto-hide Controls" description="Controls disappear after a few seconds of inactivity" enabled={styleConfig.controlsAutoHide} onToggle={(v) => setStyleConfig((c) => ({ ...c, controlsAutoHide: v }))} />
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* SMART AUTOPLAY */}
-          <Card>
-            <CardTitle className="mb-4 flex items-center gap-2">
-              <Play className="w-5 h-5 text-primary" /> Smart Autoplay
-            </CardTitle>
-            <CardContent>
-              <FeatureToggle
-                label="Enable Smart Autoplay"
-                description="Video starts muted with an overlay prompting viewers to click to listen"
-                enabled={autoplayConfig.enabled}
-                onToggle={(v) => setAutoplayConfig((c: any) => ({ ...c, enabled: v }))}
-              />
-              {autoplayConfig.enabled && (
-                <>
-                  <div className="grid grid-cols-2 gap-4 mt-4">
-                    <div>
-                      <label className="text-sm font-medium mb-1.5 block">Muted Message</label>
-                      <Input value={autoplayConfig.mutedMessage} onChange={(e) => setAutoplayConfig((c: any) => ({ ...c, mutedMessage: e.target.value }))} />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-1.5 block">Click Message</label>
-                      <Input value={autoplayConfig.clickMessage} onChange={(e) => setAutoplayConfig((c: any) => ({ ...c, clickMessage: e.target.value }))} />
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <label className="text-sm font-medium mb-1.5 block">Overlay Opacity</label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="range" min="0.3" max="1" step="0.05"
-                        value={autoplayConfig.overlayOpacity}
-                        onChange={(e) => setAutoplayConfig((c: any) => ({ ...c, overlayOpacity: parseFloat(e.target.value) }))}
-                        className="flex-1"
-                      />
-                      <span className="text-xs text-muted-foreground w-10">{Math.round((autoplayConfig.overlayOpacity || 0.85) * 100)}%</span>
-                    </div>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* FICTITIOUS PROGRESS */}
-          <Card>
-            <CardTitle className="mb-4 flex items-center gap-2">
-              <Timer className="w-5 h-5 text-primary" /> Fictitious Progress Bar
-            </CardTitle>
-            <CardContent>
-              <FeatureToggle
-                label="Enable Fictitious Progress"
-                description="Progress bar moves faster at start — makes videos feel shorter, improves retention"
-                enabled={progressBarConfig.fictitious}
-                onToggle={(v) => setProgressBarConfig((c: any) => ({ ...c, fictitious: v }))}
-              />
-              {progressBarConfig.fictitious && (
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">Fast Phase End</label>
-                    <div className="flex items-center gap-2">
-                      <input type="range" min="0.05" max="0.4" step="0.05" value={progressBarConfig.fastPhaseEnd}
-                        onChange={(e) => setProgressBarConfig((c: any) => ({ ...c, fastPhaseEnd: parseFloat(e.target.value) }))} className="flex-1" />
-                      <span className="text-xs text-muted-foreground w-8">{Math.round((progressBarConfig.fastPhaseEnd || 0.2) * 100)}%</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">First N% of video plays in "fast" mode</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">Slow Phase End</label>
-                    <div className="flex items-center gap-2">
-                      <input type="range" min="0.5" max="0.95" step="0.05" value={progressBarConfig.slowPhaseEnd}
-                        onChange={(e) => setProgressBarConfig((c: any) => ({ ...c, slowPhaseEnd: parseFloat(e.target.value) }))} className="flex-1" />
-                      <span className="text-xs text-muted-foreground w-8">{Math.round((progressBarConfig.slowPhaseEnd || 0.8) * 100)}%</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">Progress slows down through the middle</p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* ENGAGEMENT */}
-          <Card>
-            <CardTitle className="mb-4 flex items-center gap-2">
-              <Eye className="w-5 h-5 text-primary" /> Engagement Features
-            </CardTitle>
-            <CardContent>
-              <FeatureToggle
-                label="Recovery Thumbnail"
-                description="Show a re-engagement image when the video is paused after 2 seconds"
-                enabled={recoveryThumbnailConfig.enabled}
-                onToggle={(v) => setRecoveryThumbnailConfig((c: any) => ({ ...c, enabled: v }))}
-                icon={<Eye className="w-4 h-4" />}
-              />
-              {recoveryThumbnailConfig.enabled && (
-                <div className="grid grid-cols-2 gap-4 mt-4 mb-2">
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">Image URL</label>
-                    <Input
-                      placeholder="https://example.com/thumb.jpg"
-                      value={recoveryThumbnailConfig.imageUrl}
-                      onChange={(e) => setRecoveryThumbnailConfig((c: any) => ({ ...c, imageUrl: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">Message (optional)</label>
-                    <Input
-                      placeholder="Continue watching?"
-                      value={recoveryThumbnailConfig.message}
-                      onChange={(e) => setRecoveryThumbnailConfig((c: any) => ({ ...c, message: e.target.value }))}
-                    />
-                  </div>
-                </div>
-              )}
-              <FeatureToggle
-                label="Resume Play"
-                description="Returning visitors continue where they left off"
-                enabled={resumePlayConfig.enabled}
-                onToggle={(v) => setResumePlayConfig((c: any) => ({ ...c, enabled: v }))}
-                icon={<Pause className="w-4 h-4" />}
-              />
-              <FeatureToggle
-                label="Mini-Hook"
-                description="Short text notifications at 25%, 50%, 75% to maintain attention"
-                enabled={miniHookConfig.enabled}
-                onToggle={(v) => setMiniHookConfig((c: any) => ({ ...c, enabled: v }))}
-                icon={<MousePointer className="w-4 h-4" />}
-              />
-              <FeatureToggle
-                label="Turbo Speed"
-                description="Slightly speed up playback (A/B test 0.95x–1.15x) for better completion rates"
-                enabled={turboSpeedConfig.enabled}
-                onToggle={(v) => setTurboSpeedConfig((c: any) => ({ ...c, enabled: v }))}
-                icon={<Gauge className="w-4 h-4" />}
-              />
-              <FeatureToggle
-                label="Analytics"
-                description="Track all viewer events — plays, pauses, CTA clicks, watch time"
-                enabled={analyticsEnabled}
-                onToggle={setAnalyticsEnabled}
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* ── RIGHT: Sticky live player ─────────────────────────────────────── */}
-        <div className="xl:sticky xl:top-6">
+          {/* LIVE PLAYER PREVIEW — center stage */}
           <Card className="overflow-hidden">
-            <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Live Preview</span>
+            <div className="px-4 pt-4 pb-3 flex items-center justify-between border-b border-border">
+              <span className="text-sm font-semibold">Live Preview</span>
               <span className="text-xs text-muted-foreground">Changes apply instantly</span>
             </div>
-            <div className="p-3">
+            <div className="p-4">
               <LivePlayerPreview
                 videoUrl={videoUrl}
                 posterUrl={posterUrl}
@@ -769,26 +575,119 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
             </div>
             <div className="px-4 py-3 border-t border-border bg-muted/20">
               <div className="flex flex-wrap gap-2">
-                {autoplayConfig.enabled && (
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">Smart Autoplay</span>
-                )}
-                {progressBarConfig.fictitious && (
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-blue-500/10 text-blue-400 border-blue-500/20">Fictitious Progress</span>
-                )}
-                {resumePlayConfig.enabled && (
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-violet-500/10 text-violet-400 border-violet-500/20">Resume Play</span>
-                )}
-                {recoveryThumbnailConfig.enabled && (
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-rose-500/10 text-rose-400 border-rose-500/20">Recovery Thumb</span>
-                )}
-                {turboSpeedConfig.enabled && (
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-indigo-500/10 text-indigo-400 border-indigo-500/20">Turbo Speed</span>
-                )}
-                {analyticsEnabled && (
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-slate-500/10 text-slate-400 border-slate-500/20">Analytics</span>
-                )}
+                {autoplayConfig.enabled && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">Smart Autoplay</span>}
+                {progressBarConfig.fictitious && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-blue-500/10 text-blue-400 border-blue-500/20">Fictitious Progress</span>}
+                {resumePlayConfig.enabled && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-violet-500/10 text-violet-400 border-violet-500/20">Resume Play</span>}
+                {recoveryThumbnailConfig.enabled && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-rose-500/10 text-rose-400 border-rose-500/20">Recovery Thumb</span>}
+                {turboSpeedConfig.enabled && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-indigo-500/10 text-indigo-400 border-indigo-500/20">Turbo Speed</span>}
+                {analyticsEnabled && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-slate-500/10 text-slate-400 border-slate-500/20">Analytics</span>}
               </div>
             </div>
+          </Card>
+        </div>
+
+        {/* ── RIGHT SIDEBAR: sticky settings toggles ───────────────────────── */}
+        <div className="flex flex-col gap-4 xl:sticky xl:top-6">
+
+          {/* CONTROLS */}
+          <Card>
+            <CardTitle className="mb-3">Controls Visibility</CardTitle>
+            <CardContent>
+              <FeatureToggle label="Show Controls Bar" description="Controls bar at the bottom" enabled={styleConfig.showControls} onToggle={(v) => setStyleConfig((c) => ({ ...c, showControls: v }))} />
+              {styleConfig.showControls && (
+                <>
+                  <FeatureToggle label="Progress Bar" description="Seekable timeline" enabled={styleConfig.showProgressBar} onToggle={(v) => setStyleConfig((c) => ({ ...c, showProgressBar: v }))} />
+                  <FeatureToggle label="Play/Pause" description="Play/pause button" enabled={styleConfig.showSmallPlayButton} onToggle={(v) => setStyleConfig((c) => ({ ...c, showSmallPlayButton: v }))} />
+                  <FeatureToggle label="Video Timer" description="Current time / duration" enabled={styleConfig.showVideoTimer} onToggle={(v) => setStyleConfig((c) => ({ ...c, showVideoTimer: v }))} />
+                  <FeatureToggle label="Volume" description="Volume control" enabled={styleConfig.showVolume} onToggle={(v) => setStyleConfig((c) => ({ ...c, showVolume: v }))} />
+                  <FeatureToggle label="Fullscreen" description="Fullscreen button" enabled={styleConfig.showFullscreen} onToggle={(v) => setStyleConfig((c) => ({ ...c, showFullscreen: v }))} />
+                  <FeatureToggle label="Rewind (10s)" description="Skip back 10s" enabled={styleConfig.showRewind} onToggle={(v) => setStyleConfig((c) => ({ ...c, showRewind: v }))} />
+                  <FeatureToggle label="Fast Forward (10s)" description="Skip ahead 10s" enabled={styleConfig.showFastForward} onToggle={(v) => setStyleConfig((c) => ({ ...c, showFastForward: v }))} />
+                  <FeatureToggle label="Speed Control" description="1x / 1.5x / 2x" enabled={styleConfig.showSpeedControl} onToggle={(v) => setStyleConfig((c) => ({ ...c, showSpeedControl: v }))} />
+                  <FeatureToggle label="Big Play Button" description="Large centered play button" enabled={styleConfig.showBigPlayButton} onToggle={(v) => setStyleConfig((c) => ({ ...c, showBigPlayButton: v }))} />
+                  <FeatureToggle label="Auto-hide Controls" description="Hides after inactivity" enabled={styleConfig.controlsAutoHide} onToggle={(v) => setStyleConfig((c) => ({ ...c, controlsAutoHide: v }))} />
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* SMART AUTOPLAY */}
+          <Card>
+            <CardTitle className="mb-3 flex items-center gap-2">
+              <Play className="w-4 h-4 text-primary" /> Smart Autoplay
+            </CardTitle>
+            <CardContent>
+              <FeatureToggle label="Enable Smart Autoplay" description="Starts muted with click-to-listen overlay" enabled={autoplayConfig.enabled} onToggle={(v) => setAutoplayConfig((c: any) => ({ ...c, enabled: v }))} />
+              {autoplayConfig.enabled && (
+                <>
+                  <div className="mt-3 space-y-3">
+                    <div>
+                      <label className="text-xs font-medium mb-1 block text-muted-foreground">Muted Message</label>
+                      <Input value={autoplayConfig.mutedMessage} onChange={(e) => setAutoplayConfig((c: any) => ({ ...c, mutedMessage: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block text-muted-foreground">Click Message</label>
+                      <Input value={autoplayConfig.clickMessage} onChange={(e) => setAutoplayConfig((c: any) => ({ ...c, clickMessage: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block text-muted-foreground">Overlay Opacity</label>
+                      <div className="flex items-center gap-2">
+                        <input type="range" min="0.3" max="1" step="0.05" value={autoplayConfig.overlayOpacity} onChange={(e) => setAutoplayConfig((c: any) => ({ ...c, overlayOpacity: parseFloat(e.target.value) }))} className="flex-1" />
+                        <span className="text-xs text-muted-foreground w-8">{Math.round((autoplayConfig.overlayOpacity || 0.85) * 100)}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* FICTITIOUS PROGRESS */}
+          <Card>
+            <CardTitle className="mb-3 flex items-center gap-2">
+              <Timer className="w-4 h-4 text-primary" /> Fictitious Progress
+            </CardTitle>
+            <CardContent>
+              <FeatureToggle label="Enable Fictitious Progress" description="Progress bar feels faster at start" enabled={progressBarConfig.fictitious} onToggle={(v) => setProgressBarConfig((c: any) => ({ ...c, fictitious: v }))} />
+              {progressBarConfig.fictitious && (
+                <div className="mt-3 space-y-3">
+                  <div>
+                    <label className="text-xs font-medium mb-1 block text-muted-foreground">Fast Phase End</label>
+                    <div className="flex items-center gap-2">
+                      <input type="range" min="0.05" max="0.4" step="0.05" value={progressBarConfig.fastPhaseEnd} onChange={(e) => setProgressBarConfig((c: any) => ({ ...c, fastPhaseEnd: parseFloat(e.target.value) }))} className="flex-1" />
+                      <span className="text-xs text-muted-foreground w-8">{Math.round((progressBarConfig.fastPhaseEnd || 0.2) * 100)}%</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block text-muted-foreground">Slow Phase End</label>
+                    <div className="flex items-center gap-2">
+                      <input type="range" min="0.5" max="0.95" step="0.05" value={progressBarConfig.slowPhaseEnd} onChange={(e) => setProgressBarConfig((c: any) => ({ ...c, slowPhaseEnd: parseFloat(e.target.value) }))} className="flex-1" />
+                      <span className="text-xs text-muted-foreground w-8">{Math.round((progressBarConfig.slowPhaseEnd || 0.8) * 100)}%</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ENGAGEMENT */}
+          <Card>
+            <CardTitle className="mb-3 flex items-center gap-2">
+              <Eye className="w-4 h-4 text-primary" /> Engagement
+            </CardTitle>
+            <CardContent>
+              <FeatureToggle label="Recovery Thumbnail" description="Re-engagement image on pause" enabled={recoveryThumbnailConfig.enabled} onToggle={(v) => setRecoveryThumbnailConfig((c: any) => ({ ...c, enabled: v }))} icon={<Eye className="w-4 h-4" />} />
+              {recoveryThumbnailConfig.enabled && (
+                <div className="mt-3 space-y-2">
+                  <Input placeholder="Image URL" value={recoveryThumbnailConfig.imageUrl} onChange={(e) => setRecoveryThumbnailConfig((c: any) => ({ ...c, imageUrl: e.target.value }))} />
+                  <Input placeholder="Message (optional)" value={recoveryThumbnailConfig.message} onChange={(e) => setRecoveryThumbnailConfig((c: any) => ({ ...c, message: e.target.value }))} />
+                </div>
+              )}
+              <FeatureToggle label="Resume Play" description="Continue where they left off" enabled={resumePlayConfig.enabled} onToggle={(v) => setResumePlayConfig((c: any) => ({ ...c, enabled: v }))} icon={<Pause className="w-4 h-4" />} />
+              <FeatureToggle label="Mini-Hook" description="Notifications at 25%, 50%, 75%" enabled={miniHookConfig.enabled} onToggle={(v) => setMiniHookConfig((c: any) => ({ ...c, enabled: v }))} icon={<MousePointer className="w-4 h-4" />} />
+              <FeatureToggle label="Turbo Speed" description="A/B test 0.95x–1.15x playback" enabled={turboSpeedConfig.enabled} onToggle={(v) => setTurboSpeedConfig((c: any) => ({ ...c, enabled: v }))} icon={<Gauge className="w-4 h-4" />} />
+              <FeatureToggle label="Analytics" description="Track all viewer events" enabled={analyticsEnabled} onToggle={setAnalyticsEnabled} />
+            </CardContent>
           </Card>
         </div>
       </div>
