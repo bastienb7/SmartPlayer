@@ -18,6 +18,8 @@ const featureNames: Record<string, string> = {
   "social-proof": "Social Proof",
   "page-sync": "Page Sync",
   "traffic-filter": "Traffic Filter",
+  playback: "Playback Options",
+  polls: "Interactive Polls",
   analytics: "Analytics",
 };
 

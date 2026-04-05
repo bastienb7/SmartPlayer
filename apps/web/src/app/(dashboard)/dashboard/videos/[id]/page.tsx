@@ -9,7 +9,7 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import {
   Play, Eye, MousePointer, Clock, Code, Settings, BarChart3, Copy, Check,
   Type, Loader2, AlertCircle, Zap, MousePointer2, Repeat, Layers, Gauge,
-  Timer, Shield, Filter, Sliders,
+  Timer, Shield, Filter, Sliders, MessageSquare,
 } from "lucide-react";
 import { formatDuration, formatNumber } from "@/lib/utils";
 import { api } from "@/lib/api-client";
@@ -27,6 +27,7 @@ const featureLinks = [
   { href: "page-sync", icon: Gauge, label: "Page Sync" },
   { href: "traffic-filter", icon: Filter, label: "Traffic Filter" },
   { href: "playback", icon: Sliders, label: "Playback Options" },
+  { href: "polls", icon: MessageSquare, label: "Polls" },
 ];
 
 function VideoPlayer({ src, posterUrl }: { src?: string; posterUrl?: string }) {
@@ -131,6 +132,10 @@ export default function VideoDetailPage({ params }: { params: Promise<{ id: stri
           if (Array.isArray(pageSync) && pageSync.length > 0) active.add("page-sync");
           const traffic = p.trafficFilterConfig;
           if (traffic && traffic.enabled) active.add("traffic-filter");
+          const playback = p.playbackConfig;
+          if (playback && Object.keys(playback).length > 0) active.add("playback");
+          const polls = p.pollsConfig;
+          if (polls && polls.enabled && polls.polls?.length > 0) active.add("polls");
           if (p.analyticsEnabled) active.add("player");
           setActiveFeatures(active);
         }
