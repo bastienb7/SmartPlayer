@@ -49,7 +49,7 @@ export function Sidebar() {
           </div>
           {!collapsed && (
             <span className="text-base font-bold text-foreground tracking-tight">
-              SmartPlayer
+              SlyPlayer
             </span>
           )}
         </Link>

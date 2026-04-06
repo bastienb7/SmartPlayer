@@ -254,7 +254,7 @@ export default function VideoDetailPage({ params }: { params: Promise<{ id: stri
           </CardTitle>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              Copy and paste this into your webpage to embed the SmartPlayer.
+              Copy and paste this into your webpage to embed the SlyPlayer.
             </p>
             <div className="relative">
               <pre className="bg-muted rounded-lg p-4 text-xs text-foreground overflow-x-auto font-mono leading-relaxed">

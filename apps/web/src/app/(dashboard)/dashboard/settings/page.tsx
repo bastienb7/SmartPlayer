@@ -253,7 +253,7 @@ export default function SettingsPage() {
         </CardTitle>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            Your API key authenticates requests to the SmartPlayer public API (<code className="text-xs bg-muted px-1.5 py-0.5 rounded">/v1/*</code>). Never share it publicly.
+            Your API key authenticates requests to the SlyPlayer public API (<code className="text-xs bg-muted px-1.5 py-0.5 rounded">/v1/*</code>). Never share it publicly.
           </p>
           <div className="flex gap-2 mb-3">
             <Input

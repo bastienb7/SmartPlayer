@@ -11,7 +11,7 @@ export default function HomePage() {
             <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center">
               <Zap className="w-4.5 h-4.5 text-primary" />
             </div>
-            <span className="text-lg font-bold tracking-tight">SmartPlayer</span>
+            <span className="text-lg font-bold tracking-tight">SlyPlayer</span>
           </div>
           <div className="flex items-center gap-6">
             <Link href="#features" className="text-sm text-muted-foreground hover:text-foreground transition">
@@ -148,7 +148,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-border py-10 text-center text-sm text-muted-foreground">
-        &copy; {new Date().getFullYear()} SmartPlayer. Built for conversions.
+        &copy; {new Date().getFullYear()} SlyPlayer. Built for conversions.
       </footer>
     </div>
   );

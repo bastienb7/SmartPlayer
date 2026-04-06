@@ -3,7 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
 
 export const metadata: Metadata = {
-  title: "SmartPlayer — Video Player for Conversions",
+  title: "SlyPlayer — Video Player for Conversions",
   description: "The most performant video player focused on conversion. Host, optimize, and track your sales videos.",
 };
 
