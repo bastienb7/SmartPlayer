@@ -13,6 +13,7 @@ interface SocialProofItem {
   interval: number;
 }
 
+
 export default function SocialProofPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [notifications, setNotifications] = useState<SocialProofItem[]>([]);

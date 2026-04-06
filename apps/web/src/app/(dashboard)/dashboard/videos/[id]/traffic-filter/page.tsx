@@ -126,6 +126,7 @@ const commonCountries = [
   { code: "CI", label: "Ivory Coast" },
 ];
 
+
 export default function TrafficFilterPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [config, setConfig] = useState<TrafficFilterConfig>(defaultConfig);

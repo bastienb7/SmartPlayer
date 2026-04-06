@@ -53,6 +53,7 @@ const defaultConfig: PlaybackConfig = {
   preloadStrategy: "auto",
 };
 
+
 export default function PlaybackOptionsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [config, setConfig] = useState<PlaybackConfig>(defaultConfig);

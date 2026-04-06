@@ -21,6 +21,7 @@ const actionOptions = [
   { value: "add-class", label: "Add Class", description: "Add a CSS class to the element" },
 ];
 
+
 export default function PageSyncPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [rules, setRules] = useState<PageSyncRule[]>([]);

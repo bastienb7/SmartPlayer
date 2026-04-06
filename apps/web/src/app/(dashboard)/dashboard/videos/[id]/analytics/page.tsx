@@ -18,6 +18,7 @@ function formatWatchTime(seconds: number): string {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
+
 export default function VideoAnalyticsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [loading, setLoading] = useState(true);

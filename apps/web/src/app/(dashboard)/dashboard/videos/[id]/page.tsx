@@ -79,6 +79,7 @@ function VideoPlayer({ src, posterUrl }: { src?: string; posterUrl?: string }) {
   );
 }
 
+
 export default function VideoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [video, setVideo] = useState<any>(null);

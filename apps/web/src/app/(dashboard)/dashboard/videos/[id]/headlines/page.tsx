@@ -184,6 +184,7 @@ const defaultConfig: HeadlinesConfig = {
   variants: [],
 };
 
+
 export default function HeadlinesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [config, setConfig] = useState<HeadlinesConfig>(defaultConfig);

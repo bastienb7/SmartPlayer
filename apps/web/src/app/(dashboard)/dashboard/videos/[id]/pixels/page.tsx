@@ -64,6 +64,7 @@ const platformInfo: Record<Platform, {
   },
 };
 
+
 export default function PixelsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [pixels, setPixels] = useState<PixelItem[]>([]);

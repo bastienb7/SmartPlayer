@@ -19,6 +19,7 @@ function formatTimestamp(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+
 export default function ChaptersPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [chapters, setChapters] = useState<Chapter[]>([]);

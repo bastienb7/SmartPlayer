@@ -1,0 +1,21 @@
+name = "slyplayer-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+routes = [
+  { pattern = "api.slyplayer.com/*", zone_name = "slyplayer.com" }
+]
+
+[vars]
+BASE_URL = "https://api.slyplayer.com"
+JWT_SECRET = "slyplayer-jwt-secret-change-in-production-2024"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "slyplayer-db"
+database_id = "5aea023d-f257-41a4-9c5e-2dcadc36c6aa"
+
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "slyplayer-videos"

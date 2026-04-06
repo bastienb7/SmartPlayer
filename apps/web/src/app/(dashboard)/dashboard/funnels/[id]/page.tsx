@@ -21,6 +21,7 @@ const categoryStyles: Record<string, { bg: string; text: string; border: string;
   custom: { bg: "bg-slate-500/20", text: "text-slate-400", border: "border-slate-500/30", label: "Custom" },
 };
 
+
 export default function FunnelBuilderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [funnel, setFunnel] = useState<any>(null);

@@ -23,6 +23,7 @@ const featureNames: Record<string, string> = {
   analytics: "Analytics",
 };
 
+
 export default function VideoDetailLayout({
   children,
   params,

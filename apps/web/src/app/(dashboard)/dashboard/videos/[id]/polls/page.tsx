@@ -31,6 +31,7 @@ interface PollsConfig {
 
 const defaultColors = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
+
 export default function PollsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [config, setConfig] = useState<PollsConfig>({ enabled: false, polls: [] });

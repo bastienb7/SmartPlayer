@@ -173,6 +173,7 @@ function hexToRgb(hex: string): string {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
+
 export default function ResumePlayPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [config, setConfig] = useState<ResumePlayConfig>(defaultConfig);

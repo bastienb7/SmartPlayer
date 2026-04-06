@@ -67,6 +67,7 @@ const defaultConfig: ExitIntentConfig = {
   minWatchSeconds: 30,
 };
 
+
 export default function ExitIntentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [config, setConfig] = useState<ExitIntentConfig>(defaultConfig);

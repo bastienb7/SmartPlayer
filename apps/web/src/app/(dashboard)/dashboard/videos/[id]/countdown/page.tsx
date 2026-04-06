@@ -53,6 +53,7 @@ const defaultConfig: CountdownConfig = {
   showAt: 0,
 };
 
+
 export default function CountdownPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [config, setConfig] = useState<CountdownConfig>(defaultConfig);

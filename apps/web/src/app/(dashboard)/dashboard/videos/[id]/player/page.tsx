@@ -404,6 +404,7 @@ function LivePlayerPreview({ videoUrl, posterUrl, autoplayConfig, progressBarCon
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
+
 export default function PlayerConfigPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [loading, setLoading] = useState(true);
