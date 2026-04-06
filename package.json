@@ -7,7 +7,8 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
-    "clean": "turbo clean"
+    "clean": "turbo clean",
+    "prepare": "echo 'skip husky'"
   },
   "devDependencies": {
     "turbo": "^2.5.0",
