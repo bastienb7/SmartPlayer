@@ -636,6 +636,19 @@ app.patch("/api/settings", authMiddleware, async (c) => {
   return c.json({ ok: true });
 });
 
+app.post("/api/settings/regenerate-key", authMiddleware, async (c) => {
+  const newKey = "sp_live_" + uuid().replace(/-/g, "") + uuid().replace(/-/g, "").slice(0, 16);
+  await c.env.DB.prepare("UPDATE organizations SET api_key = ? WHERE id = ?").bind(newKey, c.get("orgId")).run();
+  return c.json({ apiKey: newKey });
+});
+
+app.patch("/api/settings/plan", authMiddleware, async (c) => {
+  const { plan } = await c.req.json();
+  if (!["free", "starter", "pro", "business"].includes(plan)) return c.json({ error: "Invalid plan" }, 400);
+  await c.env.DB.prepare("UPDATE organizations SET plan = ? WHERE id = ?").bind(plan, c.get("orgId")).run();
+  return c.json({ ok: true, plan });
+});
+
 // ═══════════════════════════════════════════════════════════
 // R2 upload (for VPS transcoder)
 // ═══════════════════════════════════════════════════════════

@@ -20,15 +20,31 @@ interface ToggleProps {
   enabled: boolean;
   onToggle: (v: boolean) => void;
   icon?: React.ReactNode;
+  tooltip?: string;
 }
 
-function FeatureToggle({ label, description, enabled, onToggle, icon }: ToggleProps) {
+function Tooltip({ text }: { text: string }) {
+  return (
+    <span className="relative group/tip inline-flex">
+      <span className="w-4 h-4 rounded-full bg-muted text-muted-foreground text-[10px] font-bold flex items-center justify-center cursor-help hover:bg-primary/20 hover:text-primary transition-colors">?</span>
+      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg bg-[#1a1a2e] border border-border text-xs text-foreground w-56 text-center opacity-0 invisible group-hover/tip:opacity-100 group-hover/tip:visible transition-all duration-200 pointer-events-none z-50 shadow-xl leading-relaxed">
+        {text}
+        <span className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-[#1a1a2e]" />
+      </span>
+    </span>
+  );
+}
+
+function FeatureToggle({ label, description, enabled, onToggle, icon, tooltip }: ToggleProps) {
   return (
     <div className="flex items-center justify-between py-3.5 border-b border-border last:border-0">
       <div className="flex items-center gap-3">
         {icon && <span className="text-muted-foreground">{icon}</span>}
         <div>
-          <div className="font-medium text-sm">{label}</div>
+          <div className="font-medium text-sm flex items-center gap-1.5">
+            {label}
+            {tooltip && <Tooltip text={tooltip} />}
+          </div>
           <div className="text-xs text-muted-foreground">{description}</div>
         </div>
       </div>
@@ -677,7 +693,7 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
           <Card>
             <CardTitle className="mb-3">Controls Visibility</CardTitle>
             <CardContent>
-              <FeatureToggle label="Show Controls Bar" description="Controls bar at the bottom" enabled={styleConfig.showControls} onToggle={(v) => setStyleConfig((c) => ({ ...c, showControls: v }))} />
+              <FeatureToggle label="Show Controls Bar" description="Controls bar at the bottom" tooltip="Toggle the entire controls bar (play, volume, fullscreen, etc.). Hide it for a cleaner cinematic look or if you want viewers to watch without skipping." enabled={styleConfig.showControls} onToggle={(v) => setStyleConfig((c) => ({ ...c, showControls: v }))} />
               {styleConfig.showControls && (
                 <>
                   <FeatureToggle label="Progress Bar" description="Seekable timeline" enabled={styleConfig.showProgressBar} onToggle={(v) => setStyleConfig((c) => ({ ...c, showProgressBar: v }))} />
@@ -688,8 +704,8 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
                   <FeatureToggle label="Rewind (10s)" description="Skip back 10s" enabled={styleConfig.showRewind} onToggle={(v) => setStyleConfig((c) => ({ ...c, showRewind: v }))} />
                   <FeatureToggle label="Fast Forward (10s)" description="Skip ahead 10s" enabled={styleConfig.showFastForward} onToggle={(v) => setStyleConfig((c) => ({ ...c, showFastForward: v }))} />
                   <FeatureToggle label="Speed Control" description="1x / 1.5x / 2x" enabled={styleConfig.showSpeedControl} onToggle={(v) => setStyleConfig((c) => ({ ...c, showSpeedControl: v }))} />
-                  <FeatureToggle label="Big Play Button" description="Large centered play button" enabled={styleConfig.showBigPlayButton} onToggle={(v) => setStyleConfig((c) => ({ ...c, showBigPlayButton: v }))} />
-                  <FeatureToggle label="Auto-hide Controls" description="Hides after inactivity" enabled={styleConfig.controlsAutoHide} onToggle={(v) => setStyleConfig((c) => ({ ...c, controlsAutoHide: v }))} />
+                  <FeatureToggle label="Big Play Button" description="Large centered play button" tooltip="Shows a large play button in the center of the video when paused. Useful for a clear visual call-to-action to start playing." enabled={styleConfig.showBigPlayButton} onToggle={(v) => setStyleConfig((c) => ({ ...c, showBigPlayButton: v }))} />
+                  <FeatureToggle label="Auto-hide Controls" description="Hides after inactivity" tooltip="Controls fade out after 3 seconds of no mouse movement, giving a cleaner viewing experience. They reappear when the viewer moves their mouse." enabled={styleConfig.controlsAutoHide} onToggle={(v) => setStyleConfig((c) => ({ ...c, controlsAutoHide: v }))} />
                 </>
               )}
             </CardContent>
@@ -701,7 +717,7 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
               <Play className="w-4 h-4 text-primary" /> Smart Autoplay
             </CardTitle>
             <CardContent>
-              <FeatureToggle label="Enable Smart Autoplay" description="Starts muted with click-to-listen overlay" enabled={autoplayConfig.enabled} onToggle={(v) => setAutoplayConfig((c: any) => ({ ...c, enabled: v }))} />
+              <FeatureToggle label="Enable Smart Autoplay" description="Starts muted with click-to-listen overlay" tooltip="The video starts playing automatically but muted. A customizable overlay invites the viewer to click to unmute. This dramatically increases play rates compared to a static play button." enabled={autoplayConfig.enabled} onToggle={(v) => setAutoplayConfig((c: any) => ({ ...c, enabled: v }))} />
               {autoplayConfig.enabled && (
                 <>
                   <div className="mt-3 space-y-3">
@@ -732,7 +748,7 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
               <Timer className="w-4 h-4 text-primary" /> Fictitious Progress
             </CardTitle>
             <CardContent>
-              <FeatureToggle label="Enable Fictitious Progress" description="Progress bar feels faster at start" enabled={progressBarConfig.fictitious} onToggle={(v) => setProgressBarConfig((c: any) => ({ ...c, fictitious: v }))} />
+              <FeatureToggle label="Enable Fictitious Progress" description="Progress bar feels faster at start" tooltip="The progress bar moves faster during the first part of the video, making viewers feel they've already watched more than they have. This psychological trick reduces early drop-offs and improves retention by 15-30%." enabled={progressBarConfig.fictitious} onToggle={(v) => setProgressBarConfig((c: any) => ({ ...c, fictitious: v }))} />
               {progressBarConfig.fictitious && (
                 <div className="mt-3 space-y-3">
                   <div>
@@ -760,17 +776,17 @@ export default function PlayerConfigPage({ params }: { params: Promise<{ id: str
               <Eye className="w-4 h-4 text-primary" /> Engagement
             </CardTitle>
             <CardContent>
-              <FeatureToggle label="Recovery Thumbnail" description="Re-engagement image on pause" enabled={recoveryThumbnailConfig.enabled} onToggle={(v) => setRecoveryThumbnailConfig((c: any) => ({ ...c, enabled: v }))} icon={<Eye className="w-4 h-4" />} />
+              <FeatureToggle label="Recovery Thumbnail" description="Re-engagement image on pause" tooltip="When a viewer pauses or gets distracted, a clickable image overlay appears after a delay to re-engage them. Great for recovering viewers who tabbed away." enabled={recoveryThumbnailConfig.enabled} onToggle={(v) => setRecoveryThumbnailConfig((c: any) => ({ ...c, enabled: v }))} icon={<Eye className="w-4 h-4" />} />
               {recoveryThumbnailConfig.enabled && (
                 <div className="mt-3 space-y-2">
                   <Input placeholder="Image URL" value={recoveryThumbnailConfig.imageUrl} onChange={(e) => setRecoveryThumbnailConfig((c: any) => ({ ...c, imageUrl: e.target.value }))} />
                   <Input placeholder="Message (optional)" value={recoveryThumbnailConfig.message} onChange={(e) => setRecoveryThumbnailConfig((c: any) => ({ ...c, message: e.target.value }))} />
                 </div>
               )}
-              <FeatureToggle label="Resume Play" description="Continue where they left off" enabled={resumePlayConfig.enabled} onToggle={(v) => setResumePlayConfig((c: any) => ({ ...c, enabled: v }))} icon={<Pause className="w-4 h-4" />} />
-              <FeatureToggle label="Mini-Hook" description="Notifications at 25%, 50%, 75%" enabled={miniHookConfig.enabled} onToggle={(v) => setMiniHookConfig((c: any) => ({ ...c, enabled: v }))} icon={<MousePointer className="w-4 h-4" />} />
-              <FeatureToggle label="Turbo Speed" description="A/B test 0.95x–1.15x playback" enabled={turboSpeedConfig.enabled} onToggle={(v) => setTurboSpeedConfig((c: any) => ({ ...c, enabled: v }))} icon={<Gauge className="w-4 h-4" />} />
-              <FeatureToggle label="Analytics" description="Track all viewer events" enabled={analyticsEnabled} onToggle={setAnalyticsEnabled} />
+              <FeatureToggle label="Resume Play" description="Continue where they left off" tooltip="Returning visitors see a prompt to continue from their last watched position instead of starting over. Saved in the browser for up to 7 days." enabled={resumePlayConfig.enabled} onToggle={(v) => setResumePlayConfig((c: any) => ({ ...c, enabled: v }))} icon={<Pause className="w-4 h-4" />} />
+              <FeatureToggle label="Mini-Hook" description="Notifications at 25%, 50%, 75%" tooltip="Small text notifications that appear at key moments (25%, 50%, 75%) to keep the viewer's attention. Example: 'You're halfway through — the best part is coming!'" enabled={miniHookConfig.enabled} onToggle={(v) => setMiniHookConfig((c: any) => ({ ...c, enabled: v }))} icon={<MousePointer className="w-4 h-4" />} />
+              <FeatureToggle label="Turbo Speed" description="A/B test 0.95x–1.15x playback" tooltip="Slightly speeds up or slows down playback (invisible to the viewer) and measures which speed gets the best conversion rate. A proven optimization for VSLs." enabled={turboSpeedConfig.enabled} onToggle={(v) => setTurboSpeedConfig((c: any) => ({ ...c, enabled: v }))} icon={<Gauge className="w-4 h-4" />} />
+              <FeatureToggle label="Analytics" description="Track all viewer events" tooltip="Tracks plays, pauses, seeks, watch time, CTA clicks, and more. This data feeds the analytics dashboard with heatmaps, drop-off charts, and engagement metrics." enabled={analyticsEnabled} onToggle={setAnalyticsEnabled} />
             </CardContent>
           </Card>
         </div>
