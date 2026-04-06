@@ -7,6 +7,9 @@ type Env = {
   BASE_URL: string;
   JWT_SECRET: string;
   RESEND_API_KEY: string;
+  WEB_URL: string;
+  VPS_TRANSCODE_URL: string;
+  VPS_TRANSCODE_SECRET: string;
 };
 
 type Variables = {
@@ -175,9 +178,9 @@ app.get("/auth/verify", async (c) => {
   const token = c.req.query("token");
   if (!token) return c.html('<html><body style="font-family:sans-serif;text-align:center;padding:60px;background:#0a0a0f;color:#fff;"><h1>Invalid link</h1></body></html>', 400);
   const user: any = await c.env.DB.prepare("SELECT id, email, name FROM users WHERE verification_token = ?").bind(token).first();
-  if (!user) return c.html('<html><body style="font-family:sans-serif;text-align:center;padding:60px;background:#0a0a0f;color:#fff;"><h1>Link expired</h1><a href="' + c.env.BASE_URL + '/login" style="color:#10b981;">Go to login</a></body></html>', 404);
+  if (!user) return c.html('<html><body style="font-family:sans-serif;text-align:center;padding:60px;background:#0a0a0f;color:#fff;"><h1>Link expired</h1><a href="' + (c.env.WEB_URL || 'https://slyplayer.com') + '/login" style="color:#10b981;">Go to login</a></body></html>', 404);
   await c.env.DB.prepare("UPDATE users SET email_verified = 1, verification_token = NULL WHERE id = ?").bind(user.id).run();
-  return c.html('<html><body style="font-family:sans-serif;text-align:center;padding:60px;background:#0a0a0f;color:#fff;"><div style="display:inline-block;width:64px;height:64px;background:#10b981;border-radius:50%;line-height:64px;margin-bottom:24px;"><span style="color:white;font-size:32px;">✓</span></div><h1>Email Verified!</h1><p style="color:#9ca3af;">Your account <strong>' + user.email + '</strong> is verified.</p><a href="' + c.env.BASE_URL + '/dashboard" style="display:inline-block;background:#10b981;color:white;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;margin-top:20px;">Go to Dashboard</a></body></html>');
+  return c.html('<html><body style="font-family:sans-serif;text-align:center;padding:60px;background:#0a0a0f;color:#fff;"><div style="display:inline-block;width:64px;height:64px;background:#10b981;border-radius:50%;line-height:64px;margin-bottom:24px;"><span style="color:white;font-size:32px;">✓</span></div><h1>Email Verified!</h1><p style="color:#9ca3af;">Your account <strong>' + user.email + '</strong> is verified.</p><a href="' + (c.env.WEB_URL || 'https://slyplayer.com') + '/dashboard" style="display:inline-block;background:#10b981;color:white;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;margin-top:20px;">Go to Dashboard</a></body></html>');
 });
 
 app.post("/auth/resend-verification", async (c) => {
@@ -261,12 +264,57 @@ app.post("/api/videos/:id/uploaded", authMiddleware, async (c) => {
   const video: any = await c.env.DB.prepare("SELECT * FROM videos WHERE id = ? AND org_id = ?").bind(id, orgId).first();
   if (!video) return c.json({ error: "Not found" }, 404);
 
-  // For now, mark as ready with direct R2 URL (no transcoding on Workers)
-  // Transcoding will be handled by VPS worker or Cloudflare Stream later
-  const videoUrl = `${c.env.BASE_URL}/media/videos/${video.org_id}/${video.filename}`;
-  await c.env.DB.prepare("UPDATE videos SET status = 'ready', hls_url = ?, updated_at = datetime('now') WHERE id = ?").bind(videoUrl, id).run();
+  // Mark as processing
+  await c.env.DB.prepare("UPDATE videos SET status = 'processing', updated_at = datetime('now') WHERE id = ?").bind(id).run();
 
-  return c.json({ ok: true, status: "ready" });
+  // Send webhook to VPS for FFmpeg transcoding
+  if (c.env.VPS_TRANSCODE_URL) {
+    try {
+      await fetch(c.env.VPS_TRANSCODE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Transcode-Secret": c.env.VPS_TRANSCODE_SECRET || "" },
+        body: JSON.stringify({
+          videoId: id,
+          orgId,
+          filename: video.filename,
+          r2Key: `videos/${orgId}/${video.filename}`,
+          callbackUrl: `${c.env.BASE_URL}/api/internal/transcode-complete`,
+        }),
+      });
+    } catch {
+      // If VPS unreachable, serve as MP4 directly
+      const videoUrl = `${c.env.BASE_URL}/media/videos/${orgId}/${video.filename}`;
+      await c.env.DB.prepare("UPDATE videos SET status = 'ready', hls_url = ?, updated_at = datetime('now') WHERE id = ?").bind(videoUrl, id).run();
+    }
+  } else {
+    // No VPS configured — serve MP4 directly
+    const videoUrl = `${c.env.BASE_URL}/media/videos/${orgId}/${video.filename}`;
+    await c.env.DB.prepare("UPDATE videos SET status = 'ready', hls_url = ?, updated_at = datetime('now') WHERE id = ?").bind(videoUrl, id).run();
+  }
+
+  return c.json({ ok: true, status: "processing" });
+});
+
+// Internal callback from VPS after transcoding
+app.post("/api/internal/transcode-complete", async (c) => {
+  const secret = c.req.header("X-Transcode-Secret");
+  if (secret !== c.env.VPS_TRANSCODE_SECRET) return c.json({ error: "Unauthorized" }, 401);
+
+  const { videoId, status, hlsUrl, posterUrl, duration, width, height } = await c.req.json();
+
+  if (status === "ready") {
+    await c.env.DB.prepare(
+      "UPDATE videos SET status = 'ready', hls_url = ?, poster_url = ?, duration = ?, width = ?, height = ?, updated_at = datetime('now') WHERE id = ?"
+    ).bind(hlsUrl, posterUrl || null, duration || 0, width || 0, height || 0, videoId).run();
+  } else {
+    // Error — fallback to MP4
+    const video: any = await c.env.DB.prepare("SELECT * FROM videos WHERE id = ?").bind(videoId).first();
+    if (video) {
+      const videoUrl = `${c.env.BASE_URL}/media/videos/${video.org_id}/${video.filename}`;
+      await c.env.DB.prepare("UPDATE videos SET status = 'ready', hls_url = ?, updated_at = datetime('now') WHERE id = ?").bind(videoUrl, videoId).run();
+    }
+  }
+  return c.json({ ok: true });
 });
 
 app.patch("/api/videos/:id", authMiddleware, async (c) => {
@@ -586,6 +634,24 @@ app.patch("/api/settings", authMiddleware, async (c) => {
   const { orgName } = await c.req.json();
   if (orgName) await c.env.DB.prepare("UPDATE organizations SET name = ? WHERE id = ?").bind(orgName, c.get("orgId")).run();
   return c.json({ ok: true });
+});
+
+// ═══════════════════════════════════════════════════════════
+// R2 upload (for VPS transcoder)
+// ═══════════════════════════════════════════════════════════
+
+app.put("/api/internal/r2-upload", async (c) => {
+  const secret = c.req.header("X-Transcode-Secret");
+  if (secret !== c.env.VPS_TRANSCODE_SECRET) return c.json({ error: "Unauthorized" }, 401);
+
+  const r2Key = c.req.header("X-R2-Key");
+  if (!r2Key) return c.json({ error: "X-R2-Key header required" }, 400);
+
+  const contentType = c.req.header("Content-Type") || "application/octet-stream";
+  const body = await c.req.arrayBuffer();
+  await c.env.R2.put(r2Key, body, { httpMetadata: { contentType } });
+
+  return c.json({ ok: true, key: r2Key, size: body.byteLength });
 });
 
 // ═══════════════════════════════════════════════════════════

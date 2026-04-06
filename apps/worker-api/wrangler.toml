@@ -9,7 +9,9 @@ routes = [
 
 [vars]
 BASE_URL = "https://api.slyplayer.com"
+WEB_URL = "https://slyplayer.com"
 JWT_SECRET = "slyplayer-jwt-secret-change-in-production-2024"
+VPS_TRANSCODE_URL = "https://player.bastienbricout.com/api/transcode"
 
 [[d1_databases]]
 binding = "DB"
