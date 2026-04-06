@@ -6,6 +6,7 @@ type Env = {
   R2: R2Bucket;
   BASE_URL: string;
   JWT_SECRET: string;
+  RESEND_API_KEY: string;
 };
 
 type Variables = {
@@ -120,6 +121,23 @@ app.post("/auth/signup", async (c) => {
   await c.env.DB.prepare("INSERT INTO users (id, email, password_hash, name, org_id, email_verified, verification_token) VALUES (?, ?, ?, ?, ?, 0, ?)")
     .bind(id, email.toLowerCase(), passwordHash, name, "default", verificationToken).run();
 
+  // Send verification email via Resend
+  const verifyUrl = `${c.env.BASE_URL}/auth/verify?token=${verificationToken}`;
+  if (c.env.RESEND_API_KEY) {
+    try {
+      await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${c.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: "SlyPlayer <noreply@bastienbricout.com>",
+          to: email.toLowerCase(),
+          subject: "Verify your SlyPlayer account",
+          html: `<div style="max-width:480px;margin:0 auto;font-family:-apple-system,sans-serif;color:#1a1a2e;"><div style="text-align:center;padding:32px 0;"><div style="display:inline-block;width:48px;height:48px;background:#10b981;border-radius:12px;line-height:48px;"><span style="color:white;font-size:24px;font-weight:bold;">▶</span></div></div><h1 style="text-align:center;font-size:24px;margin:0 0 8px;">Welcome to SlyPlayer</h1><p style="text-align:center;color:#6b7280;margin:0 0 32px;">Hi ${name}, verify your email to get started.</p><div style="text-align:center;margin:32px 0;"><a href="${verifyUrl}" style="display:inline-block;background:#10b981;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;">Verify my email</a></div><p style="text-align:center;color:#9ca3af;font-size:13px;">Or copy: <a href="${verifyUrl}" style="color:#10b981;">${verifyUrl}</a></p></div>`,
+        }),
+      });
+    } catch { /* don't fail signup if email fails */ }
+  }
+
   const token = await signJWT({ userId: id, email: email.toLowerCase(), orgId: "default" }, c.env.JWT_SECRET);
   return c.json({ token, user: { id, email: email.toLowerCase(), name, emailVerified: false }, message: "Account created! Check your email to verify." }, 201);
 });
@@ -150,6 +168,44 @@ app.get("/auth/me", async (c) => {
   const user: any = await c.env.DB.prepare("SELECT id, email, name, org_id, email_verified, created_at FROM users WHERE id = ?").bind(payload.userId).first();
   if (!user) return c.json({ error: "User not found" }, 401);
   return c.json({ user: { ...user, emailVerified: !!user.email_verified } });
+});
+
+// Email verification
+app.get("/auth/verify", async (c) => {
+  const token = c.req.query("token");
+  if (!token) return c.html('<html><body style="font-family:sans-serif;text-align:center;padding:60px;background:#0a0a0f;color:#fff;"><h1>Invalid link</h1></body></html>', 400);
+  const user: any = await c.env.DB.prepare("SELECT id, email, name FROM users WHERE verification_token = ?").bind(token).first();
+  if (!user) return c.html('<html><body style="font-family:sans-serif;text-align:center;padding:60px;background:#0a0a0f;color:#fff;"><h1>Link expired</h1><a href="' + c.env.BASE_URL + '/login" style="color:#10b981;">Go to login</a></body></html>', 404);
+  await c.env.DB.prepare("UPDATE users SET email_verified = 1, verification_token = NULL WHERE id = ?").bind(user.id).run();
+  return c.html('<html><body style="font-family:sans-serif;text-align:center;padding:60px;background:#0a0a0f;color:#fff;"><div style="display:inline-block;width:64px;height:64px;background:#10b981;border-radius:50%;line-height:64px;margin-bottom:24px;"><span style="color:white;font-size:32px;">✓</span></div><h1>Email Verified!</h1><p style="color:#9ca3af;">Your account <strong>' + user.email + '</strong> is verified.</p><a href="' + c.env.BASE_URL + '/dashboard" style="display:inline-block;background:#10b981;color:white;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;margin-top:20px;">Go to Dashboard</a></body></html>');
+});
+
+app.post("/auth/resend-verification", async (c) => {
+  const { email } = await c.req.json();
+  if (!email) return c.json({ error: "Email required" }, 400);
+  const user: any = await c.env.DB.prepare("SELECT * FROM users WHERE email = ?").bind(email.toLowerCase()).first();
+  if (!user || user.email_verified) return c.json({ ok: true });
+  let vToken = user.verification_token;
+  if (!vToken) {
+    vToken = uuid();
+    await c.env.DB.prepare("UPDATE users SET verification_token = ? WHERE id = ?").bind(vToken, user.id).run();
+  }
+  if (c.env.RESEND_API_KEY) {
+    const verifyUrl = `${c.env.BASE_URL}/auth/verify?token=${vToken}`;
+    try {
+      await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${c.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: "SlyPlayer <noreply@bastienbricout.com>",
+          to: email.toLowerCase(),
+          subject: "Verify your SlyPlayer account",
+          html: `<div style="max-width:480px;margin:0 auto;font-family:sans-serif;text-align:center;"><h1>Verify your email</h1><a href="${verifyUrl}" style="display:inline-block;background:#10b981;color:white;padding:14px 32px;border-radius:8px;font-weight:600;text-decoration:none;">Verify</a></div>`,
+        }),
+      });
+    } catch { /* ignore */ }
+  }
+  return c.json({ ok: true });
 });
 
 // ═══════════════════════════════════════════════════════════
