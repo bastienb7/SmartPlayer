@@ -16,23 +16,27 @@ import {
   Bell,
   LogOut,
   User,
+  BookOpen,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { LanguageSwitcher, useI18n } from "@/lib/i18n";
 
-const navItems = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/dashboard/videos", label: "Videos", icon: Video },
-  { href: "/dashboard/videos/upload", label: "Upload", icon: Upload },
-  { href: "/dashboard/funnels", label: "Funnels", icon: Layers },
-  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+const navKeys = [
+  { href: "/dashboard", key: "overview" as const, icon: LayoutDashboard },
+  { href: "/dashboard/videos", key: "videos" as const, icon: Video },
+  { href: "/dashboard/videos/upload", key: "upload" as const, icon: Upload },
+  { href: "/dashboard/funnels", key: "funnels" as const, icon: Layers },
+  { href: "/dashboard/analytics", key: "analytics" as const, icon: BarChart3 },
+  { href: "/dashboard/settings", key: "settings" as const, icon: Settings },
+  { href: "/dashboard/docs", key: "docs" as const, icon: BookOpen },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const { user, logout } = useAuth();
+  const { t } = useI18n();
 
   return (
     <aside
@@ -57,7 +61,7 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-0.5">
-        {navItems.map((item) => {
+        {navKeys.map((item) => {
           const isActive =
             pathname === item.href ||
             (item.href !== "/dashboard" && pathname.startsWith(item.href));
@@ -82,7 +86,7 @@ export function Sidebar() {
                   isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
                 )}
               />
-              {!collapsed && <span>{item.label}</span>}
+              {!collapsed && <span>{t(item.key)}</span>}
             </Link>
           );
         })}
@@ -106,8 +110,9 @@ export function Sidebar() {
           className="flex items-center gap-2 px-3 py-2 w-full text-sm text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-destructive/5"
         >
           <LogOut className="w-4 h-4 flex-shrink-0" />
-          {!collapsed && <span>Sign Out</span>}
+          {!collapsed && <span>{t("logout")}</span>}
         </button>
+        {!collapsed && <LanguageSwitcher />}
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="flex items-center gap-2 px-3 py-2 w-full text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-white/[0.03]"
@@ -118,7 +123,7 @@ export function Sidebar() {
               collapsed && "rotate-180"
             )}
           />
-          {!collapsed && <span>Collapse</span>}
+          {!collapsed && <span>{t("collapse")}</span>}
         </button>
       </div>
     </aside>
