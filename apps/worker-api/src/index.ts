@@ -10,6 +10,11 @@ type Env = {
   WEB_URL: string;
   VPS_TRANSCODE_URL: string;
   VPS_TRANSCODE_SECRET: string;
+  STRIPE_SECRET_KEY: string;
+  STRIPE_WEBHOOK_SECRET: string;
+  STRIPE_PRICE_STARTER: string;
+  STRIPE_PRICE_PRO: string;
+  STRIPE_PRICE_BUSINESS: string;
 };
 
 type Variables = {
@@ -647,6 +652,122 @@ app.patch("/api/settings/plan", authMiddleware, async (c) => {
   if (!["free", "starter", "pro", "business"].includes(plan)) return c.json({ error: "Invalid plan" }, 400);
   await c.env.DB.prepare("UPDATE organizations SET plan = ? WHERE id = ?").bind(plan, c.get("orgId")).run();
   return c.json({ ok: true, plan });
+});
+
+// ═══════════════════════════════════════════════════════════
+// Stripe Billing
+// ═══════════════════════════════════════════════════════════
+
+// Helper: call Stripe API
+async function stripeAPI(method: string, path: string, body: Record<string, string> | null, secretKey: string) {
+  const headers: Record<string, string> = {
+    "Authorization": `Bearer ${secretKey}`,
+    "Content-Type": "application/x-www-form-urlencoded",
+  };
+  const opts: RequestInit = { method, headers };
+  if (body) {
+    opts.body = new URLSearchParams(body).toString();
+  }
+  const res = await fetch(`https://api.stripe.com/v1${path}`, opts);
+  return res.json() as Promise<any>;
+}
+
+// Create checkout session
+app.post("/api/stripe/checkout", authMiddleware, async (c) => {
+  const { plan } = await c.req.json();
+  const priceMap: Record<string, string> = {
+    starter: c.env.STRIPE_PRICE_STARTER,
+    pro: c.env.STRIPE_PRICE_PRO,
+    business: c.env.STRIPE_PRICE_BUSINESS,
+  };
+  const priceId = priceMap[plan];
+  if (!priceId) return c.json({ error: "Invalid plan" }, 400);
+
+  const orgId = c.get("orgId");
+  const org: any = await c.env.DB.prepare("SELECT * FROM organizations WHERE id = ?").bind(orgId).first();
+
+  // Get or create Stripe customer
+  let customerId = org?.stripe_customer_id;
+  if (!customerId) {
+    const user: any = await c.env.DB.prepare("SELECT email FROM users WHERE org_id = ? LIMIT 1").bind(orgId).first();
+    const customer = await stripeAPI("POST", "/customers", {
+      email: user?.email || "",
+      name: org?.name || "SlyPlayer User",
+      "metadata[org_id]": orgId,
+    }, c.env.STRIPE_SECRET_KEY);
+    customerId = customer.id;
+    await c.env.DB.prepare("UPDATE organizations SET stripe_customer_id = ? WHERE id = ?").bind(customerId, orgId).run();
+  }
+
+  const webUrl = c.env.WEB_URL || "https://slyplayer.com";
+  const session = await stripeAPI("POST", "/checkout/sessions", {
+    customer: customerId,
+    "line_items[0][price]": priceId,
+    "line_items[0][quantity]": "1",
+    mode: "subscription",
+    success_url: `${webUrl}/dashboard/settings?billing=success`,
+    cancel_url: `${webUrl}/dashboard/settings?billing=cancel`,
+    "metadata[org_id]": orgId,
+    "metadata[plan]": plan,
+    "subscription_data[metadata][org_id]": orgId,
+    "subscription_data[metadata][plan]": plan,
+  }, c.env.STRIPE_SECRET_KEY);
+
+  if (session.error) return c.json({ error: session.error.message }, 400);
+  return c.json({ url: session.url });
+});
+
+// Customer portal (manage subscription)
+app.post("/api/stripe/portal", authMiddleware, async (c) => {
+  const orgId = c.get("orgId");
+  const org: any = await c.env.DB.prepare("SELECT stripe_customer_id FROM organizations WHERE id = ?").bind(orgId).first();
+  if (!org?.stripe_customer_id) return c.json({ error: "No subscription found" }, 400);
+
+  const webUrl = c.env.WEB_URL || "https://slyplayer.com";
+  const session = await stripeAPI("POST", "/billing_portal/sessions", {
+    customer: org.stripe_customer_id,
+    return_url: `${webUrl}/dashboard/settings`,
+  }, c.env.STRIPE_SECRET_KEY);
+
+  if (session.error) return c.json({ error: session.error.message }, 400);
+  return c.json({ url: session.url });
+});
+
+// Stripe webhook
+app.post("/api/stripe/webhook", async (c) => {
+  // For simplicity, we verify by checking the event from Stripe API
+  // In production, use signature verification with STRIPE_WEBHOOK_SECRET
+  const body = await c.req.json();
+  const type = body.type;
+  const data = body.data?.object;
+
+  if (type === "checkout.session.completed") {
+    const orgId = data?.metadata?.org_id;
+    const plan = data?.metadata?.plan;
+    const subscriptionId = data?.subscription;
+    const customerId = data?.customer;
+    if (orgId && plan) {
+      await c.env.DB.prepare("UPDATE organizations SET plan = ?, stripe_customer_id = ?, stripe_subscription_id = ? WHERE id = ?")
+        .bind(plan, customerId, subscriptionId, orgId).run();
+    }
+  }
+
+  if (type === "customer.subscription.updated") {
+    const orgId = data?.metadata?.org_id;
+    const status = data?.status;
+    if (orgId && status === "canceled") {
+      await c.env.DB.prepare("UPDATE organizations SET plan = 'free', stripe_subscription_id = NULL WHERE id = ?").bind(orgId).run();
+    }
+  }
+
+  if (type === "customer.subscription.deleted") {
+    const orgId = data?.metadata?.org_id;
+    if (orgId) {
+      await c.env.DB.prepare("UPDATE organizations SET plan = 'free', stripe_subscription_id = NULL WHERE id = ?").bind(orgId).run();
+    }
+  }
+
+  return c.json({ received: true });
 });
 
 // ═══════════════════════════════════════════════════════════

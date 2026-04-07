@@ -114,12 +114,32 @@ export default function SettingsPage() {
 
   const handleChangePlan = async (planId: string) => {
     if (planId === settings?.plan) return;
-    if (planId === "free" && settings?.plan !== "free") {
-      if (!confirm("Downgrade to Free? You'll lose access to premium features at the end of your billing period.")) return;
+
+    if (planId === "free") {
+      // Downgrade → open Stripe portal to cancel
+      if (!confirm("Downgrade to Free? You'll be redirected to manage your subscription.")) return;
+      try {
+        const data = await api.createPortalSession();
+        window.location.href = data.url;
+      } catch (err: any) {
+        // No subscription — just update locally
+        await api.updatePlan(planId);
+        setSettings({ ...settings, plan: planId });
+      }
+      return;
     }
+
+    // Upgrade → Stripe Checkout
     try {
-      await api.updatePlan(planId);
-      setSettings({ ...settings, plan: planId });
+      const data = await api.createCheckout(planId);
+      window.location.href = data.url;
+    } catch (err: any) { setError(err.message); }
+  };
+
+  const handleManageBilling = async () => {
+    try {
+      const data = await api.createPortalSession();
+      window.location.href = data.url;
     } catch (err: any) { setError(err.message); }
   };
 
@@ -194,9 +214,14 @@ export default function SettingsPage() {
               </div>
             </div>
             {settings?.plan !== "free" && (
-              <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => handleChangePlan("free")}>
-                Cancel subscription
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleManageBilling}>
+                  Manage Billing
+                </Button>
+                <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => handleChangePlan("free")}>
+                  Cancel subscription
+                </Button>
+              </div>
             )}
           </div>
 

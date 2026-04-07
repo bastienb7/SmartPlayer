@@ -157,6 +157,12 @@ export const api = {
   updatePlan: (plan: string) =>
     request<any>("/api/settings/plan", { method: "PATCH", body: JSON.stringify({ plan }) }),
 
+  // Stripe
+  createCheckout: (plan: string) =>
+    request<{ url: string }>("/api/stripe/checkout", { method: "POST", body: JSON.stringify({ plan }) }),
+  createPortalSession: () =>
+    request<{ url: string }>("/api/stripe/portal", { method: "POST" }),
+
   // Folders (Library)
   getFolders: () => request<{ folders: any[] }>("/api/folders"),
   createFolder: (data: { name: string; color?: string }) =>

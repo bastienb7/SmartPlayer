@@ -12,6 +12,9 @@ BASE_URL = "https://api.slyplayer.com"
 WEB_URL = "https://slyplayer.com"
 JWT_SECRET = "slyplayer-jwt-secret-change-in-production-2024"
 VPS_TRANSCODE_URL = "https://player.bastienbricout.com/api/transcode"
+STRIPE_PRICE_STARTER = "price_1TJPk8CE0sI0qfx68i86Q9Y5"
+STRIPE_PRICE_PRO = "price_1TJPk9CE0sI0qfx6HGPeBa84"
+STRIPE_PRICE_BUSINESS = "price_1TJPkOCE0sI0qfx6cvJpuCOq"
 
 [[d1_databases]]
 binding = "DB"
