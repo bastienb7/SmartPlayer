@@ -49,17 +49,25 @@ export const fr = {
   uniqueViewers: "Visiteurs uniques",
   ctaClicks: "Clics CTA",
   avgWatch: "Temps moyen",
+  allTimeStats: "Statistiques globales",
   playsTrend: "Tendance des lectures",
+  dailyPerformance: "Performance quotidienne",
   topVideos: "Top vid\u00e9os",
+  byTotalPlays: "Par nombre de lectures",
   recentVideos: "Vid\u00e9os r\u00e9centes",
   quickActions: "Actions rapides",
   uploadVideo: "Uploader une vid\u00e9o",
   viewAnalytics: "Voir les analytiques",
   allVideos: "Toutes les vid\u00e9os",
   viewAll: "Voir tout",
+  noPlayData: "Aucune donn\u00e9e de lecture. Les donn\u00e9es appara\u00eetront d\u00e8s que des spectateurs regarderont vos vid\u00e9os.",
+  noVideosUploaded: "Aucune vid\u00e9o upload\u00e9e",
+  noVideosYet: "Aucune vid\u00e9o",
 
   // Videos
+  videoLibrary: "Biblioth\u00e8que vid\u00e9o",
   manageLibrary: "G\u00e9rez votre biblioth\u00e8que vid\u00e9o.",
+  uploadManageDesc: "Uploadez, organisez et g\u00e9rez toutes vos vid\u00e9os.",
   uploadNew: "Uploader une nouvelle vid\u00e9o",
   dropOrBrowse: "D\u00e9posez votre vid\u00e9o ici ou cliquez pour parcourir",
   uploadFormats: "MP4, MOV, WebM \u2014 Jusqu'\u00e0 5 Go \u2014 Transcodage HLS automatique multi-qualit\u00e9",
@@ -75,6 +83,14 @@ export const fr = {
   allVids: "Toutes les vid\u00e9os",
   uncategorized: "Non class\u00e9es",
   noVideos: "Aucune vid\u00e9o. Uploadez-en une ci-dessus.",
+  noMatchFilters: "Aucune vid\u00e9o ne correspond \u00e0 vos filtres.",
+  uploadAndTranscode: "Uploader et transcoder",
+  retry: "R\u00e9essayer",
+  appearInLibrary: "Elle appara\u00eetra dans votre biblioth\u00e8que ci-dessous.",
+
+  // Auth extras
+  signUp: "S'inscrire",
+  signIn: "Se connecter",
 
   // Video Detail
   preview: "Aper\u00e7u",
@@ -151,6 +167,7 @@ export const fr = {
   abComparison: "Comparaison A/B",
   biggestDropoff: "Plus gros abandon \u00e0",
   noAnalytics: "Int\u00e9grez le lecteur sur votre page pour commencer \u00e0 collecter les analytiques. Les donn\u00e9es appara\u00eetront apr\u00e8s les premiers spectateurs.",
+  noRetentionData: "Aucune donn\u00e9e de r\u00e9tention",
 
   // Settings
   manageSettings: "G\u00e9rez votre organisation, facturation et int\u00e9grations.",
@@ -161,8 +178,11 @@ export const fr = {
   billingPlan: "Facturation & Plan",
   currentPlan: "Plan actuel",
   cancelSubscription: "R\u00e9silier l'abonnement",
+  manageBilling: "G\u00e9rer la facturation",
+  currentPlanBadge: "Plan actuel",
   upgrade: "Passer au sup\u00e9rieur",
   downgrade: "R\u00e9trograder",
+  popular: "Populaire",
   apiKey: "Cl\u00e9 API",
   apiKeyDesc: "Votre cl\u00e9 API authentifie les requ\u00eates vers l'API publique SlyPlayer. Ne la partagez jamais.",
   regenerate: "R\u00e9g\u00e9n\u00e9rer",
@@ -172,6 +192,7 @@ export const fr = {
   publicApi: "API publique",
   analyticsEndpoint: "Endpoint analytiques",
   embedTemplate: "Mod\u00e8le de code d'int\u00e9gration",
+  replaceIdDesc: "Remplacez VIDEO_ID ou FUNNEL_ID par l'identifiant r\u00e9el depuis votre tableau de bord.",
 
   // Funnels
   noFunnels: "Aucun funnel cr\u00e9\u00e9",

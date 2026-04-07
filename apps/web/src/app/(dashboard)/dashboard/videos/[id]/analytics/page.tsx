@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
 import { api } from "@/lib/api-client";
+import { useI18n } from "@/lib/i18n";
 
 function formatWatchTime(seconds: number): string {
   if (!seconds || seconds <= 0) return "0s";
@@ -23,6 +24,7 @@ function formatWatchTime(seconds: number): string {
 
 export default function VideoAnalyticsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -92,16 +94,16 @@ export default function VideoAnalyticsPage({ params }: { params: Promise<{ id: s
     return (
       <div>
         <div className="mb-8">
-          <h1 className="text-2xl font-bold">Analytics</h1>
-          <p className="text-muted-foreground">Detailed performance metrics for this video.</p>
+          <h1 className="text-2xl font-bold">{t("analytics")}</h1>
+          <p className="text-muted-foreground">{t("detailedMetrics")}</p>
         </div>
         <Card>
           <div className="flex flex-col items-center gap-4 py-16">
             <BarChart3 className="w-16 h-16 text-muted-foreground" />
             <div className="text-center">
-              <p className="font-semibold mb-1">No data yet</p>
+              <p className="font-semibold mb-1">{t("noData")}</p>
               <p className="text-sm text-muted-foreground max-w-md">
-                Embed the player on your page to start collecting analytics. Data will appear here after the first viewers.
+                {t("noAnalytics")}
               </p>
             </div>
           </div>
@@ -157,29 +159,29 @@ export default function VideoAnalyticsPage({ params }: { params: Promise<{ id: s
     <div>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold">Analytics</h1>
-        <p className="text-muted-foreground">Detailed performance metrics for this video.</p>
+        <h1 className="text-2xl font-bold">{t("analytics")}</h1>
+        <p className="text-muted-foreground">{t("detailedMetrics")}</p>
       </div>
 
       {/* === KPI Cards Row 1 === */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-        <StatCard title="Total Plays" value={formatNumber(totalPlays)} icon={<Play className="w-5 h-5" />} delay={0} />
-        <StatCard title="Unique Viewers" value={formatNumber(uniqueViewers)} icon={<Eye className="w-5 h-5" />} delay={50} />
-        <StatCard title="Avg Watch Time" value={formatWatchTime(avgWatchTime)} icon={<Clock className="w-5 h-5" />} delay={100} />
-        <StatCard title="Completion Rate" value={`${completionRate.toFixed(1)}%`} icon={<TrendingUp className="w-5 h-5" />} delay={150} />
+        <StatCard title={t("totalPlays")} value={formatNumber(totalPlays)} icon={<Play className="w-5 h-5" />} delay={0} />
+        <StatCard title={t("uniqueViewers")} value={formatNumber(uniqueViewers)} icon={<Eye className="w-5 h-5" />} delay={50} />
+        <StatCard title={t("avgWatchTime")} value={formatWatchTime(avgWatchTime)} icon={<Clock className="w-5 h-5" />} delay={100} />
+        <StatCard title={t("completionRate")} value={`${completionRate.toFixed(1)}%`} icon={<TrendingUp className="w-5 h-5" />} delay={150} />
       </div>
 
       {/* === KPI Cards Row 2 === */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <StatCard title="Total Pauses" value={formatNumber(totalPauses)} icon={<Pause className="w-5 h-5" />} delay={200} />
-        <StatCard title="Total Seeks" value={formatNumber(totalSeeks)} icon={<ArrowRightLeft className="w-5 h-5" />} delay={250} />
-        <StatCard title="CTA CTR" value={ctaCTR > 0 ? `${ctaCTR.toFixed(1)}%` : "--"} icon={<Target className="w-5 h-5" />} delay={300} />
-        <StatCard title="Returning Viewers" value={formatNumber(returningViewers)} icon={<Users className="w-5 h-5" />} delay={350} />
+        <StatCard title={t("totalPauses")} value={formatNumber(totalPauses)} icon={<Pause className="w-5 h-5" />} delay={200} />
+        <StatCard title={t("totalSeeks")} value={formatNumber(totalSeeks)} icon={<ArrowRightLeft className="w-5 h-5" />} delay={250} />
+        <StatCard title={t("ctaCTR")} value={ctaCTR > 0 ? `${ctaCTR.toFixed(1)}%` : "--"} icon={<Target className="w-5 h-5" />} delay={300} />
+        <StatCard title={t("returningViewers")} value={formatNumber(returningViewers)} icon={<Users className="w-5 h-5" />} delay={350} />
       </div>
 
       {/* === Retention Curve === */}
       <Card className="mb-6">
-        <CardTitle className="mb-4">Watch Time Curve</CardTitle>
+        <CardTitle className="mb-4">{t("watchTimeCurve")}</CardTitle>
         <CardContent>
           {retention.length > 0 ? (
             <>
@@ -202,13 +204,13 @@ export default function VideoAnalyticsPage({ params }: { params: Promise<{ id: s
               </div>
               {biggestDropBucket >= 0 && (
                 <p className="text-xs text-amber-400 mt-3">
-                  Biggest drop-off at <span className="font-semibold">{biggestDropBucket}%</span> of the video ({biggestDropPct.toFixed(0)}% of viewers left here)
+                  {t("biggestDropoff")} <span className="font-semibold">{biggestDropBucket}%</span> ({biggestDropPct.toFixed(0)}%)
                 </p>
               )}
             </>
           ) : (
             <div className="h-48 flex items-center justify-center text-muted-foreground border border-dashed border-border rounded-lg">
-              No retention data yet
+              {t("noRetentionData")}
             </div>
           )}
         </CardContent>
@@ -217,7 +219,7 @@ export default function VideoAnalyticsPage({ params }: { params: Promise<{ id: s
       {/* === Heatmap === */}
       {heatmap.length > 0 && (
         <Card className="mb-6">
-          <CardTitle className="mb-4">Engagement Heatmap</CardTitle>
+          <CardTitle className="mb-4">{t("engagementHeatmap")}</CardTitle>
           <CardContent>
             <div className="flex gap-0.5 h-10 rounded-lg overflow-hidden">
               {heatmap.map((h: any) => (
@@ -244,7 +246,7 @@ export default function VideoAnalyticsPage({ params }: { params: Promise<{ id: s
       {/* === Drop-off Funnel === */}
       {dropoff.length > 0 && (
         <Card className="mb-6">
-          <CardTitle className="mb-4">Drop-off Funnel</CardTitle>
+          <CardTitle className="mb-4">{t("dropoffFunnel")}</CardTitle>
           <CardContent>
             <div className="space-y-1.5">
               {dropoff.map((d: any, i: number) => {
@@ -280,7 +282,7 @@ export default function VideoAnalyticsPage({ params }: { params: Promise<{ id: s
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Plays per day */}
           <Card>
-            <CardTitle className="mb-4">Plays per Day</CardTitle>
+            <CardTitle className="mb-4">{t("playsPerDay")}</CardTitle>
             <CardContent>
               <div className="h-40 flex items-end gap-0.5">
                 {daily.slice(-30).map((d: any, i: number) => (
@@ -302,7 +304,7 @@ export default function VideoAnalyticsPage({ params }: { params: Promise<{ id: s
 
           {/* CTA clicks per day */}
           <Card>
-            <CardTitle className="mb-4">CTA Clicks per Day</CardTitle>
+            <CardTitle className="mb-4">{t("ctaClicksPerDay")}</CardTitle>
             <CardContent>
               <div className="h-40 flex items-end gap-0.5">
                 {daily.slice(-30).map((d: any, i: number) => (
@@ -327,7 +329,7 @@ export default function VideoAnalyticsPage({ params }: { params: Promise<{ id: s
       {/* === Device Breakdown === */}
       {deviceTotal > 0 && (
         <Card className="mb-6">
-          <CardTitle className="mb-4">Device Breakdown</CardTitle>
+          <CardTitle className="mb-4">{t("deviceBreakdown")}</CardTitle>
           <CardContent>
             <div className="flex gap-8 justify-center">
               {/* Desktop */}
@@ -344,7 +346,7 @@ export default function VideoAnalyticsPage({ params }: { params: Promise<{ id: s
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Monitor className="w-4 h-4 text-primary" />
-                  <span>Desktop ({desktopCount})</span>
+                  <span>{t("desktop")} ({desktopCount})</span>
                 </div>
               </div>
 
@@ -362,7 +364,7 @@ export default function VideoAnalyticsPage({ params }: { params: Promise<{ id: s
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Smartphone className="w-4 h-4 text-secondary" />
-                  <span>Mobile ({mobileCount})</span>
+                  <span>{t("mobile")} ({mobileCount})</span>
                 </div>
               </div>
             </div>
@@ -373,7 +375,7 @@ export default function VideoAnalyticsPage({ params }: { params: Promise<{ id: s
       {/* === A/B Variants === */}
       {variants.length >= 2 && (
         <Card>
-          <CardTitle className="mb-4">A/B Comparison</CardTitle>
+          <CardTitle className="mb-4">{t("abComparison")}</CardTitle>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

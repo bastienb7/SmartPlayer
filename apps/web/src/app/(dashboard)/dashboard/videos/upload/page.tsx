@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { formatDuration, formatDate } from "@/lib/utils";
 import { api } from "@/lib/api-client";
+import { useI18n } from "@/lib/i18n";
 
 type UploadState = "idle" | "selected" | "uploading" | "processing" | "done" | "error";
 
@@ -27,6 +28,7 @@ const categories = [
 
 export default function UploadPage() {
   const router = useRouter();
+  const { t } = useI18n();
 
   // Upload state
   const [file, setFile] = useState<File | null>(null);
@@ -170,15 +172,15 @@ export default function UploadPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Video Library</h1>
-          <p className="text-muted-foreground">Upload, organize, and manage all your videos.</p>
+          <h1 className="text-2xl font-bold">{t("videoLibrary")}</h1>
+          <p className="text-muted-foreground">{t("uploadManageDesc")}</p>
         </div>
       </div>
 
       {/* ===== UPLOAD SECTION ===== */}
       <Card className="mb-8">
         <CardTitle className="flex items-center gap-2 mb-4">
-          <Upload className="w-5 h-5 text-primary" /> Upload New Video
+          <Upload className="w-5 h-5 text-primary" /> {t("uploadNew")}
         </CardTitle>
         <CardContent className="p-0">
           {state === "idle" && (
@@ -193,8 +195,8 @@ export default function UploadPage() {
                   <Upload className="w-7 h-7 text-primary" />
                 </div>
                 <div className="text-center">
-                  <p className="font-medium">Drop your video here or click to browse</p>
-                  <p className="text-sm text-muted-foreground mt-1">MP4, MOV, WebM &middot; Up to 5GB &middot; Auto-transcoded to HLS multi-quality</p>
+                  <p className="font-medium">{t("dropOrBrowse")}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{t("uploadFormats")}</p>
                 </div>
               </div>
               <input id="file-input" type="file" accept="video/*" className="hidden" onChange={handleFileSelect} />
@@ -215,11 +217,11 @@ export default function UploadPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium mb-1.5 block">Video Title</label>
+                  <label className="text-sm font-medium mb-1.5 block">{t("videoTitle")}</label>
                   <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="My amazing video" />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-1.5 block">Category</label>
+                  <label className="text-sm font-medium mb-1.5 block">{t("category")}</label>
                   <select value={uploadCategory} onChange={(e) => setUploadCategory(e.target.value)} className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm">
                     {categories.filter((c) => c.value !== "all").map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                   </select>
@@ -227,7 +229,7 @@ export default function UploadPage() {
               </div>
               {error && <div className="flex items-center gap-2 text-sm text-destructive"><AlertCircle className="w-4 h-4" /> {error}</div>}
               <Button onClick={handleUpload} disabled={!title} className="w-full">
-                <Upload className="w-4 h-4 mr-2" /> Upload & Transcode
+                <Upload className="w-4 h-4 mr-2" /> {t("uploadAndTranscode")}
               </Button>
             </div>
           )}
@@ -237,7 +239,7 @@ export default function UploadPage() {
               <div className="flex items-center gap-4">
                 <Loader2 className="w-6 h-6 animate-spin text-primary flex-shrink-0" />
                 <div className="flex-1">
-                  <p className="font-medium text-sm">{state === "uploading" ? "Uploading..." : "Transcoding to HLS..."}</p>
+                  <p className="font-medium text-sm">{state === "uploading" ? t("loading") : t("transcoding")}</p>
                   <p className="text-xs text-muted-foreground">{file?.name} &middot; {file && `${(file.size / 1_000_000).toFixed(1)} MB`}</p>
                 </div>
                 <span className="text-sm font-medium text-primary">{progress}%</span>
@@ -246,7 +248,7 @@ export default function UploadPage() {
                 <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
               </div>
               {state === "processing" && (
-                <p className="text-xs text-muted-foreground">Generating 360p, 480p, 720p, 1080p. Takes 1-3 min. You can leave this page.</p>
+                <p className="text-xs text-muted-foreground">{t("transcodingDesc")}</p>
               )}
             </div>
           )}
@@ -255,8 +257,8 @@ export default function UploadPage() {
             <div className="flex items-center gap-3 p-3 bg-primary/10 rounded-lg">
               <CheckCircle className="w-6 h-6 text-primary" />
               <div>
-                <p className="text-sm font-medium text-primary">Video uploaded and transcoded successfully!</p>
-                <p className="text-xs text-muted-foreground">It will appear in your library below.</p>
+                <p className="text-sm font-medium text-primary">{t("uploadSuccess")}</p>
+                <p className="text-xs text-muted-foreground">{t("appearInLibrary")}</p>
               </div>
             </div>
           )}
@@ -265,7 +267,7 @@ export default function UploadPage() {
             <div className="flex items-center gap-3 p-3">
               <AlertCircle className="w-5 h-5 text-destructive" />
               <p className="text-sm text-destructive">{error}</p>
-              <Button variant="outline" size="sm" onClick={() => { setState("idle"); setError(""); }}>Retry</Button>
+              <Button variant="outline" size="sm" onClick={() => { setState("idle"); setError(""); }}>{t("retry")}</Button>
             </div>
           )}
         </CardContent>
@@ -273,12 +275,12 @@ export default function UploadPage() {
 
       {/* ===== LIBRARY ===== */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Library ({videos.length} videos)</h2>
+        <h2 className="text-lg font-semibold">{t("library")} ({videos.length})</h2>
         <div className="flex items-center gap-2">
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search..." className="pl-8 w-48 h-9" />
+            <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={t("search")} className="pl-8 w-48 h-9" />
           </div>
           {/* View toggle */}
           <div className="flex border border-border rounded-lg overflow-hidden">
@@ -310,17 +312,17 @@ export default function UploadPage() {
         {/* Sidebar: Folders */}
         <div className="w-48 flex-shrink-0">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-muted-foreground uppercase">Folders</span>
+            <span className="text-xs font-medium text-muted-foreground uppercase">{t("folders")}</span>
             <button onClick={() => setShowNewFolder(true)} className="text-muted-foreground hover:text-primary">
               <FolderPlus className="w-4 h-4" />
             </button>
           </div>
 
           <button onClick={() => setFilterFolder(null)} className={`flex items-center gap-2 w-full text-left px-2 py-1.5 rounded text-sm transition-colors ${filterFolder === null ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}>
-            <Folder className="w-4 h-4" /> All Videos
+            <Folder className="w-4 h-4" /> {t("allVids")}
           </button>
           <button onClick={() => setFilterFolder("__none__")} className={`flex items-center gap-2 w-full text-left px-2 py-1.5 rounded text-sm transition-colors ${filterFolder === "__none__" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}>
-            <Folder className="w-4 h-4" /> Uncategorized
+            <Folder className="w-4 h-4" /> {t("uncategorized")}
           </button>
 
           {folders.map((f) => (
@@ -351,7 +353,7 @@ export default function UploadPage() {
           ) : filtered.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
               <Film className="w-10 h-10 mx-auto mb-3 opacity-40" />
-              <p>{searchQuery || filterCategory !== "all" || filterFolder ? "No videos match your filters." : "No videos yet. Upload one above."}</p>
+              <p>{searchQuery || filterCategory !== "all" || filterFolder ? t("noMatchFilters") : t("noVideos")}</p>
             </div>
           ) : viewMode === "grid" ? (
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">

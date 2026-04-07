@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { TopBar } from "@/components/dashboard/sidebar";
+import { useI18n } from "@/lib/i18n";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Card, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,7 @@ import { formatNumber, formatDate, formatDuration } from "@/lib/utils";
 import { api } from "@/lib/api-client";
 
 export default function DashboardPage() {
+  const { t } = useI18n();
   const [stats, setStats] = useState({ totalPlays: 0, uniqueViewers: 0, ctaClicks: 0, avgProgress: 0 });
   const [videos, setVideos] = useState<any[]>([]);
   const [daily, setDaily] = useState<any[]>([]);
@@ -56,21 +58,21 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <TopBar title="Overview" subtitle="All time stats" />
+      <TopBar title={t("overview")} subtitle={t("allTimeStats")} />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard title="Total Plays" value={formatNumber(stats.totalPlays)} icon={<Play className="w-5 h-5" />} delay={0} />
-        <StatCard title="Unique Viewers" value={formatNumber(stats.uniqueViewers)} icon={<Eye className="w-5 h-5" />} delay={75} />
-        <StatCard title="CTA Clicks" value={formatNumber(stats.ctaClicks)} icon={<MousePointer className="w-5 h-5" />} delay={150} />
-        <StatCard title="Avg. Watch" value={`${stats.avgProgress}%`} icon={<TrendingUp className="w-5 h-5" />} delay={225} />
+        <StatCard title={t("totalPlays")} value={formatNumber(stats.totalPlays)} icon={<Play className="w-5 h-5" />} delay={0} />
+        <StatCard title={t("uniqueViewers")} value={formatNumber(stats.uniqueViewers)} icon={<Eye className="w-5 h-5" />} delay={75} />
+        <StatCard title={t("ctaClicks")} value={formatNumber(stats.ctaClicks)} icon={<MousePointer className="w-5 h-5" />} delay={150} />
+        <StatCard title={t("avgWatch")} value={`${stats.avgProgress}%`} icon={<TrendingUp className="w-5 h-5" />} delay={225} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Daily Plays Chart */}
         <Card className="lg:col-span-2">
-          <CardTitle>Plays Trend</CardTitle>
-          <CardDescription>Daily performance</CardDescription>
+          <CardTitle>{t("playsTrend")}</CardTitle>
+          <CardDescription>{t("dailyPerformance")}</CardDescription>
           <CardContent>
             {daily.length > 0 ? (
               <div className="h-64 mt-4 flex items-end gap-1 px-2">
@@ -86,7 +88,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="h-64 mt-4 flex items-center justify-center text-muted-foreground border border-dashed border-border rounded-lg">
-                No play data yet. Data will appear once viewers start watching.
+                {t("noPlayData")}
               </div>
             )}
           </CardContent>
@@ -94,8 +96,8 @@ export default function DashboardPage() {
 
         {/* Top Videos */}
         <Card>
-          <CardTitle>Top Videos</CardTitle>
-          <CardDescription>By total plays</CardDescription>
+          <CardTitle>{t("topVideos")}</CardTitle>
+          <CardDescription>{t("byTotalPlays")}</CardDescription>
           <CardContent>
             {topVideos.length > 0 ? (
               <div className="space-y-4 mt-4">
@@ -117,7 +119,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="mt-4 text-sm text-muted-foreground text-center py-8">
-                No videos yet
+                {t("noVideosYet")}
               </div>
             )}
           </CardContent>
@@ -128,9 +130,9 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <div className="flex items-center justify-between mb-4">
-            <CardTitle>Recent Videos</CardTitle>
+            <CardTitle>{t("recentVideos")}</CardTitle>
             <Link href="/dashboard/videos" className="text-sm text-primary hover:text-primary/80">
-              View all &rarr;
+              {t("viewAll")} &rarr;
             </Link>
           </div>
           <CardContent>
@@ -169,21 +171,21 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="text-sm text-muted-foreground text-center py-8">
-                No videos uploaded yet
+                {t("noVideosUploaded")}
               </div>
             )}
           </CardContent>
         </Card>
 
         <Card>
-          <CardTitle>Quick Actions</CardTitle>
+          <CardTitle>{t("quickActions")}</CardTitle>
           <CardContent>
             <div className="grid grid-cols-2 gap-3 mt-4">
               {[
-                { label: "Upload Video", icon: "📤", href: "/dashboard/videos/upload", color: "from-primary/20 to-primary/5" },
-                { label: "View Analytics", icon: "📊", href: "/dashboard/analytics", color: "from-secondary/20 to-secondary/5" },
-                { label: "All Videos", icon: "🎬", href: "/dashboard/videos", color: "from-chart-3/20 to-chart-3/5" },
-                { label: "Settings", icon: "⚙️", href: "/dashboard/settings", color: "from-chart-4/20 to-chart-4/5" },
+                { label: t("uploadVideo"), icon: "📤", href: "/dashboard/videos/upload", color: "from-primary/20 to-primary/5" },
+                { label: t("viewAnalytics"), icon: "📊", href: "/dashboard/analytics", color: "from-secondary/20 to-secondary/5" },
+                { label: t("allVideos"), icon: "🎬", href: "/dashboard/videos", color: "from-chart-3/20 to-chart-3/5" },
+                { label: t("settings"), icon: "⚙️", href: "/dashboard/settings", color: "from-chart-4/20 to-chart-4/5" },
               ].map((action) => (
                 <Link
                   key={action.label}

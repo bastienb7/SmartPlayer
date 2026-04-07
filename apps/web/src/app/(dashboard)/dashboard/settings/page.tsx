@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 
 const plans = [
   {
@@ -59,6 +60,7 @@ const plans = [
 
 export default function SettingsPage() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -155,8 +157,8 @@ export default function SettingsPage() {
   return (
     <div className="max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">Manage your organization, billing, and integrations.</p>
+        <h1 className="text-2xl font-bold">{t("settings")}</h1>
+        <p className="text-muted-foreground">{t("manageSettings")}</p>
       </div>
 
       {error && (
@@ -168,12 +170,12 @@ export default function SettingsPage() {
       {/* ===== ORGANIZATION ===== */}
       <Card className="mb-6">
         <CardTitle className="flex items-center gap-2 mb-4">
-          <Building2 className="w-5 h-5 text-primary" /> Organization
+          <Building2 className="w-5 h-5 text-primary" /> {t("organization")}
         </CardTitle>
         <CardContent>
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Organization Name</label>
+              <label className="text-sm font-medium mb-1.5 block">{t("orgName")}</label>
               <div className="flex gap-2">
                 <Input value={orgName} onChange={(e) => setOrgName(e.target.value)} />
                 <Button variant="outline" onClick={handleSaveName} disabled={savingName}>
@@ -182,13 +184,13 @@ export default function SettingsPage() {
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Account Email</label>
+              <label className="text-sm font-medium mb-1.5 block">{t("accountEmail")}</label>
               <Input readOnly value={user?.email || ""} className="bg-muted" />
             </div>
           </div>
           <div className="flex gap-6 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5"><Video className="w-4 h-4" /> {settings?.videoCount ?? 0} videos</span>
-            <span className="flex items-center gap-1.5"><Layers className="w-4 h-4" /> {settings?.funnelCount ?? 0} funnels</span>
+            <span className="flex items-center gap-1.5"><Video className="w-4 h-4" /> {settings?.videoCount ?? 0} {t("videosHosted")}</span>
+            <span className="flex items-center gap-1.5"><Layers className="w-4 h-4" /> {settings?.funnelCount ?? 0} {t("funnels")}</span>
           </div>
         </CardContent>
       </Card>
@@ -196,7 +198,7 @@ export default function SettingsPage() {
       {/* ===== BILLING & PLAN ===== */}
       <Card className="mb-6">
         <CardTitle className="flex items-center gap-2 mb-4">
-          <CreditCard className="w-5 h-5 text-primary" /> Billing & Plan
+          <CreditCard className="w-5 h-5 text-primary" /> {t("billingPlan")}
         </CardTitle>
         <CardContent>
           {/* Current plan banner */}
@@ -216,10 +218,10 @@ export default function SettingsPage() {
             {settings?.plan !== "free" && (
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={handleManageBilling}>
-                  Manage Billing
+                  {t("manageBilling")}
                 </Button>
                 <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => handleChangePlan("free")}>
-                  Cancel subscription
+                  {t("cancelSubscription")}
                 </Button>
               </div>
             )}
@@ -234,7 +236,7 @@ export default function SettingsPage() {
                 <div key={plan.id} className={`rounded-xl border-2 p-4 transition-all ${isCurrent ? plan.color + " bg-primary/5" : "border-border hover:border-border"} ${plan.popular ? "relative" : ""}`}>
                   {plan.popular && (
                     <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
-                      <span className="text-[10px] font-semibold bg-primary text-white px-2 py-0.5 rounded-full">Popular</span>
+                      <span className="text-[10px] font-semibold bg-primary text-white px-2 py-0.5 rounded-full">{t("popular")}</span>
                     </div>
                   )}
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${plan.badge}`}>
@@ -253,7 +255,7 @@ export default function SettingsPage() {
                     ))}
                   </ul>
                   {isCurrent ? (
-                    <Badge className="w-full justify-center">Current Plan</Badge>
+                    <Badge className="w-full justify-center">{t("currentPlanBadge")}</Badge>
                   ) : (
                     <Button
                       variant={isUpgrade ? "primary" : "outline"}
@@ -261,7 +263,7 @@ export default function SettingsPage() {
                       className="w-full text-xs"
                       onClick={() => handleChangePlan(plan.id)}
                     >
-                      {isUpgrade ? "Upgrade" : "Downgrade"}
+                      {isUpgrade ? t("upgrade") : t("downgrade")}
                     </Button>
                   )}
                 </div>
@@ -274,11 +276,11 @@ export default function SettingsPage() {
       {/* ===== API KEY ===== */}
       <Card className="mb-6">
         <CardTitle className="flex items-center gap-2 mb-4">
-          <Key className="w-5 h-5 text-primary" /> API Key
+          <Key className="w-5 h-5 text-primary" /> {t("apiKey")}
         </CardTitle>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            Your API key authenticates requests to the SlyPlayer public API (<code className="text-xs bg-muted px-1.5 py-0.5 rounded">/v1/*</code>). Never share it publicly.
+            {t("apiKeyDesc")} (<code className="text-xs bg-muted px-1.5 py-0.5 rounded">/v1/*</code>)
           </p>
           <div className="flex gap-2 mb-3">
             <Input
@@ -294,7 +296,7 @@ export default function SettingsPage() {
             </Button>
             <Button variant="outline" onClick={handleRegenerateKey} disabled={regenerating} className="text-amber-400 border-amber-500/30 hover:bg-amber-500/10">
               {regenerating ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1" />}
-              Regenerate
+              {t("regenerate")}
             </Button>
           </div>
         </CardContent>
@@ -303,15 +305,15 @@ export default function SettingsPage() {
       {/* ===== INTEGRATION ===== */}
       <Card className="mb-6">
         <CardTitle className="flex items-center gap-2 mb-4">
-          <Globe className="w-5 h-5 text-primary" /> Integration
+          <Globe className="w-5 h-5 text-primary" /> {t("integration")}
         </CardTitle>
         <CardContent>
           <div className="space-y-4">
             {[
-              { label: "Base URL", value: settings?.baseUrl || "", field: "baseUrl" },
-              { label: "Player Script", value: settings?.playerScriptUrl || "", field: "script" },
-              { label: "Public API", value: `${settings?.baseUrl || ""}/v1`, field: "publicApi" },
-              { label: "Analytics Endpoint", value: `${settings?.baseUrl || ""}/analytics/events`, field: "analytics" },
+              { label: t("baseUrl"), value: settings?.baseUrl || "", field: "baseUrl" },
+              { label: t("playerScript"), value: settings?.playerScriptUrl || "", field: "script" },
+              { label: t("publicApi"), value: `${settings?.baseUrl || ""}/v1`, field: "publicApi" },
+              { label: t("analyticsEndpoint"), value: `${settings?.baseUrl || ""}/analytics/events`, field: "analytics" },
             ].map((item) => (
               <div key={item.field}>
                 <label className="text-sm font-medium mb-1.5 block">{item.label}</label>
@@ -330,7 +332,7 @@ export default function SettingsPage() {
       {/* ===== EMBED TEMPLATE ===== */}
       <Card>
         <CardTitle className="flex items-center gap-2 mb-4">
-          <Code className="w-5 h-5 text-primary" /> Embed Code Template
+          <Code className="w-5 h-5 text-primary" /> {t("embedTemplate")}
         </CardTitle>
         <CardContent>
           <div className="relative">
@@ -360,7 +362,7 @@ export default function SettingsPage() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Replace <code className="bg-muted px-1 py-0.5 rounded">VIDEO_ID</code> or <code className="bg-muted px-1 py-0.5 rounded">FUNNEL_ID</code> with the actual ID from your dashboard.
+            {t("replaceIdDesc")}
           </p>
         </CardContent>
       </Card>

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { api } from "@/lib/api-client";
+import { useI18n } from "@/lib/i18n";
 
 const featureNames: Record<string, string> = {
   player: "Player Settings",
@@ -35,6 +36,7 @@ export default function VideoDetailLayout({
 }) {
   const { id } = use(params);
   const pathname = usePathname();
+  const { t } = useI18n();
   const [videoTitle, setVideoTitle] = useState("");
 
   useEffect(() => {
@@ -61,7 +63,7 @@ export default function VideoDetailLayout({
           href="/dashboard/videos"
           className="text-muted-foreground hover:text-foreground transition-colors"
         >
-          Videos
+          {t("videos")}
         </Link>
         <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
         <Link
@@ -85,7 +87,7 @@ export default function VideoDetailLayout({
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to video
+          {t("backToVideo")}
         </Link>
       )}
 

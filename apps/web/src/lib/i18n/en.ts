@@ -49,17 +49,25 @@ export const en = {
   uniqueViewers: "Unique Viewers",
   ctaClicks: "CTA Clicks",
   avgWatch: "Avg. Watch",
+  allTimeStats: "All time stats",
   playsTrend: "Plays Trend",
+  dailyPerformance: "Daily performance",
   topVideos: "Top Videos",
+  byTotalPlays: "By total plays",
   recentVideos: "Recent Videos",
   quickActions: "Quick Actions",
   uploadVideo: "Upload Video",
   viewAnalytics: "View Analytics",
   allVideos: "All Videos",
   viewAll: "View all",
+  noPlayData: "No play data yet. Data will appear once viewers start watching.",
+  noVideosUploaded: "No videos uploaded yet",
+  noVideosYet: "No videos yet",
 
   // Videos
+  videoLibrary: "Video Library",
   manageLibrary: "Manage your video library.",
+  uploadManageDesc: "Upload, organize, and manage all your videos.",
   uploadNew: "Upload New Video",
   dropOrBrowse: "Drop your video here or click to browse",
   uploadFormats: "MP4, MOV, WebM — Up to 5GB — Auto-transcoded to HLS multi-quality",
@@ -75,6 +83,10 @@ export const en = {
   allVids: "All Videos",
   uncategorized: "Uncategorized",
   noVideos: "No videos yet. Upload one above.",
+  noMatchFilters: "No videos match your filters.",
+  uploadAndTranscode: "Upload & Transcode",
+  retry: "Retry",
+  appearInLibrary: "It will appear in your library below.",
 
   // Video Detail
   preview: "Preview",
@@ -132,6 +144,10 @@ export const en = {
   miniHook: "Mini-Hook",
   turboSpeed: "Turbo Speed",
 
+  // Auth extras
+  signUp: "Sign up",
+  signIn: "Sign in",
+
   // Analytics
   detailedMetrics: "Detailed performance metrics for this video.",
   avgWatchTime: "Avg Watch Time",
@@ -151,6 +167,7 @@ export const en = {
   abComparison: "A/B Comparison",
   biggestDropoff: "Biggest drop-off at",
   noAnalytics: "Embed the player on your page to start collecting analytics. Data will appear here after the first viewers.",
+  noRetentionData: "No retention data yet",
 
   // Settings
   manageSettings: "Manage your organization, billing, and integrations.",
@@ -161,8 +178,11 @@ export const en = {
   billingPlan: "Billing & Plan",
   currentPlan: "Current Plan",
   cancelSubscription: "Cancel subscription",
+  manageBilling: "Manage Billing",
+  currentPlanBadge: "Current Plan",
   upgrade: "Upgrade",
   downgrade: "Downgrade",
+  popular: "Popular",
   apiKey: "API Key",
   apiKeyDesc: "Your API key authenticates requests to the SlyPlayer public API. Never share it publicly.",
   regenerate: "Regenerate",
@@ -172,6 +192,7 @@ export const en = {
   publicApi: "Public API",
   analyticsEndpoint: "Analytics Endpoint",
   embedTemplate: "Embed Code Template",
+  replaceIdDesc: "Replace VIDEO_ID or FUNNEL_ID with the actual ID from your dashboard.",
 
   // Funnels
   noFunnels: "No funnels created",

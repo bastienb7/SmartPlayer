@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { Loader2, AlertCircle, Play } from "lucide-react";
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,12 +42,12 @@ export default function LoginPage() {
         </div>
 
         <Card>
-          <CardTitle className="text-center mb-2">Welcome back</CardTitle>
-          <p className="text-sm text-muted-foreground text-center mb-6">Sign in to your account</p>
+          <CardTitle className="text-center mb-2">{t("welcomeBack")}</CardTitle>
+          <p className="text-sm text-muted-foreground text-center mb-6">{t("signInToAccount")}</p>
           <CardContent className="p-0">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Email</label>
+                <label className="text-sm font-medium mb-1.5 block">{t("email")}</label>
                 <Input
                   type="email"
                   value={email}
@@ -56,7 +58,7 @@ export default function LoginPage() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Password</label>
+                <label className="text-sm font-medium mb-1.5 block">{t("password")}</label>
                 <Input
                   type="password"
                   value={password}
@@ -74,14 +76,14 @@ export default function LoginPage() {
 
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Sign In
+                {t("login")}
               </Button>
             </form>
 
             <p className="text-sm text-muted-foreground text-center mt-6">
-              Don&apos;t have an account?{" "}
+              {t("noAccount")}{" "}
               <Link href="/signup" className="text-primary hover:underline font-medium">
-                Sign up
+                {t("signUp")}
               </Link>
             </p>
           </CardContent>

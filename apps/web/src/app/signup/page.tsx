@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { Loader2, AlertCircle, Play, Mail } from "lucide-react";
 
 export default function SignupPage() {
   const { signup } = useAuth();
+  const { t } = useI18n();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,12 +45,12 @@ export default function SignupPage() {
         </div>
 
         <Card>
-          <CardTitle className="text-center mb-2">Create your account</CardTitle>
-          <p className="text-sm text-muted-foreground text-center mb-6">Start building your video funnels</p>
+          <CardTitle className="text-center mb-2">{t("createYourAccount")}</CardTitle>
+          <p className="text-sm text-muted-foreground text-center mb-6">{t("startBuilding")}</p>
           <CardContent className="p-0">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Full Name</label>
+                <label className="text-sm font-medium mb-1.5 block">{t("fullName")}</label>
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -58,7 +60,7 @@ export default function SignupPage() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Email</label>
+                <label className="text-sm font-medium mb-1.5 block">{t("email")}</label>
                 <Input
                   type="email"
                   value={email}
@@ -68,7 +70,7 @@ export default function SignupPage() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Password</label>
+                <label className="text-sm font-medium mb-1.5 block">{t("password")}</label>
                 <Input
                   type="password"
                   value={password}
@@ -93,14 +95,14 @@ export default function SignupPage() {
 
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Create Account
+                {t("signup")}
               </Button>
             </form>
 
             <p className="text-sm text-muted-foreground text-center mt-6">
-              Already have an account?{" "}
+              {t("hasAccount")}{" "}
               <Link href="/login" className="text-primary hover:underline font-medium">
-                Sign in
+                {t("signIn")}
               </Link>
             </p>
           </CardContent>
